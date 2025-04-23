@@ -2,7 +2,7 @@
 //   and on https://github.com/rougier/freetype-gl
 #include <string>
 
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
 #include <glm/mat4x4.hpp>

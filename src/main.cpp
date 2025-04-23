@@ -27,7 +27,8 @@
 #include <sstream>
 
 // Headers das bibliotecas OpenGL
-#include <glad/glad.h>   // Criação de contexto OpenGL 3.3
+#define GLAD_GL_IMPLEMENTATION
+#include <glad/gl.h>   // Criação de contexto OpenGL 3.3
 #include <GLFW/glfw3.h>  // Criação de janelas do sistema operacional
 
 // Headers da biblioteca GLM: criação de matrizes e vetores.
@@ -179,7 +180,7 @@ int main()
 
     // Carregamento de todas funções definidas por OpenGL 3.3, utilizando a
     // biblioteca GLAD.
-    gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+    gladLoadGL(glfwGetProcAddress);
 
     // Imprimimos no terminal informações sobre a GPU do sistema
     const GLubyte *vendor      = glGetString(GL_VENDOR);

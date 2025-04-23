@@ -10,7 +10,6 @@ set(SOURCES
   src/matrices.cpp
   src/camera.cpp
   src/textrendering.cpp
-  src/glad.c
 )
 
 cmake_minimum_required(VERSION 3.10.0)
