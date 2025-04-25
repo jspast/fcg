@@ -23,10 +23,10 @@ Dupla: João Pastorello e Isadora Schwaab
 
 3) Instale o [CMake](https://cmake.org/download/).
 
-4) Instale as extensões "ms-vscode.cpptools" e "ms-vscode.cmake-tools" no VSCode.
+4) Instale as extensões `ms-vscode.cpptools` e `ms-vscode.cmake-tools` no VSCode.
 Se você abrir o diretório deste projeto no VSCode, automaticamente será sugerida a instalação destas extensões.
 
-5) Abra as configurações da extensão cmake-tools (Ctrl-Shift-P e busque por "CMake: Open CMake Tools Extension Settings"), e adicione o caminho de instalação do GCC na opção de configuração "additionalCompilerSearchDirs".
+5) Abra as configurações da extensão cmake-tools (Ctrl-Shift-P e busque por `CMake: Open CMake Tools Extension Settings`), e adicione o caminho de instalação do GCC na opção de configuração `additionalCompilerSearchDirs`.
 
 6) Clique no botão de "Play" na barra inferior do VSCode para compilar e executar o projeto.
 Na primeira compilação, a extensão do CMake para o VSCode irá perguntar qual compilador você quer utilizar.
@@ -69,7 +69,7 @@ Para executar o código compilado, execute o comando `make run`.
 #### VSCode (Visual Studio Code)
 1) Instale o [VSCode](https://code.visualstudio.com/).
 
-2) Instale as extensões "ms-vscode.cpptools" e "ms-vscode.cmake-tools" no VSCode.
+2) Instale as extensões `ms-vscode.cpptools` e `ms-vscode.cmake-tools` no VSCode.
 Se você abrir o diretório deste projeto no VSCode, automaticamente será sugerida a instalação destas extensões.
 
 3) Clique no botão de "Play" na barra inferior do VSCode para compilar
