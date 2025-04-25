@@ -1,10 +1,7 @@
 # Este arquivo CMakeLists.txt foi adaptado a partir do projeto castor
-# do PET INF/UFRGS (https://github.com/petcomputacaoufrgs/castor-fcg),
-# com algumas modificações vindas do arquivo CMakeLists.txt criado
-# pelos alunos Luis Melo e Santiago Gonzaga em 2023/1.
+# do PET INF/UFRGS (https://github.com/petcomputacaoufrgs/castor-fcg).
 
-# Arquivos fonte C/C++. Inclua nesta lista todos os arquivos que devem
-# ser compilados.
+# Todos os arquivos que devem ser compilados.
 set(SOURCES
   src/main.cpp
   src/matrices.cpp
@@ -57,48 +54,12 @@ endforeach()
 add_executable(${EXECUTABLE_NAME} ${SOURCES})
 
 target_include_directories(${EXECUTABLE_NAME} BEFORE PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(${EXECUTABLE_NAME} BEFORE PRIVATE ${PROJECT_SOURCE_DIR}/external/glm)
+target_include_directories(${EXECUTABLE_NAME} BEFORE PRIVATE ${PROJECT_SOURCE_DIR}/external)
 
 if(WIN32)
 
-  if(MINGW)
-
-    # Aqui tentamos descobrir qual libc do Widows está sendo usada
-    # pelo compilador MinGW: msvcrt (antiga) ou ucrt (nova). Também
-    # diferenciamos entre um compilador 32-bits (antigo) ou 64-bits.
-    # Para isso, buscamos pela ocorrência de algumas strings
-    # específicas no output do comando "-v" do GCC, que lista os
-    # parâmetros de configuração do compilador.
-    # TODO: Testar com compilador llvm/clang.
-    execute_process(
-      COMMAND ${CMAKE_CXX_COMPILER} "-v"
-      ERROR_VARIABLE  COMPILER_VERSION_OUTPUT
-      RESULT_VARIABLE COMPILER_VERSION_RESULT
-    )
-
-    if (COMPILER_VERSION_RESULT EQUAL 0)
-      # NOTE: É importante que o primeiro teste seja buscando pela
-      # string ucrt64 no output do compilador, pois a string "mingw64"
-      # sempre aparece no output (mesmo quando ucrt64 é a libc utilizada).
-      if (COMPILER_VERSION_OUTPUT MATCHES "ucrt64")
-        set(LIBGLFW ${PROJECT_SOURCE_DIR}/lib/ucrt64/libglfw3.a)
-      elseif (COMPILER_VERSION_OUTPUT MATCHES "mingw64")
-        set(LIBGLFW ${PROJECT_SOURCE_DIR}/lib/mingw64/libglfw3.a)
-      else()
-        set(LIBGLFW ${PROJECT_SOURCE_DIR}/lib/mingw32/libglfw3.a)
-      endif()
-    else()
-      message(FATAL_ERROR "Failed to get MinGW compiler version.")
-    endif()
-
-  elseif(MSVC)
-    set(LIBGLFW ${PROJECT_SOURCE_DIR}/lib/vc2022/glfw3.lib)
-  else()
-    message(FATAL_ERROR "This CMakeLists.txt file only supports MINGW or MSVC toolchain on Windows.")
-  endif()
-
-  message(STATUS "LIBGLFW = ${LIBGLFW}")
-
-  target_link_libraries(${EXECUTABLE_NAME} ${LIBGLFW} gdi32 opengl32)
+  target_link_libraries(${EXECUTABLE_NAME} glfw gdi32 opengl32)
 
 elseif(UNIX)
 
@@ -119,7 +80,7 @@ elseif(UNIX)
   target_link_libraries(${EXECUTABLE_NAME}
     ${CMAKE_DL_LIBS}
     ${MATH_LIBRARY}
-    ${PROJECT_SOURCE_DIR}/lib/linux/libglfw3.a
+    glfw
     ${CMAKE_THREAD_LIBS_INIT}
     ${OPENGL_LIBRARIES}
     ${X11_LIBRARIES}
