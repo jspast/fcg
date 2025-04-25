@@ -233,22 +233,12 @@ glm::mat4 Matrix_Camera_View(glm::vec4 position_c, glm::vec4 view_vector, glm::v
 
     glm::vec4 origin_o = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-    float ux = u.x;
-    float uy = u.y;
-    float uz = u.z;
-    float vx = v.x;
-    float vy = v.y;
-    float vz = v.z;
-    float wx = w.x;
-    float wy = w.y;
-    float wz = w.z;
-
     glm::vec4 c_vector = position_c - origin_o;
 
     return Matrix(
-        ux   , uy   , uz   , dotproduct(-u, c_vector) ,
-        vx   , vy   , vz   , dotproduct(-v, c_vector) ,
-        wx   , wy   , wz   , dotproduct(-w, c_vector) ,
+        u.x  , u.y  , u.z  , dotproduct(-u, c_vector) ,
+        v.x  , v.y  , v.z  , dotproduct(-v, c_vector) ,
+        w.x  , w.y  , w.z  , dotproduct(-w, c_vector) ,
         0.0f , 0.0f , 0.0f , 1.0f
     );
 }

@@ -1,9 +1,5 @@
 #include "camera.hpp"
 
-#include "glm/common.hpp"
-#include "glm/ext/vector_float4.hpp"
-#include <cmath>
-
 template<typename Base, typename T>
 inline bool instanceof(const T *ptr) {
     return dynamic_cast<const Base*>(ptr) != nullptr;
