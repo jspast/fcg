@@ -1,9 +1,9 @@
 # Library load path para o homebrew em M1 Macs atualizado com base na sugestão
 # do aluno Matheus de Moraes Costa em 2022/2.
 
-./bin/macOS/main: src/main.cpp src/glad.c src/textrendering.cpp include/matrices.h include/utils.h include/dejavufont.h
+./bin/macOS/main: src/main.cpp src/camera.cpp src/textrendering.cpp src/matrices.cpp src/hud.cpp include/utils.h include/dejavufont.h
 	mkdir -p bin/macOS
-	g++ -std=c++11 -Wall -Wno-deprecated-declarations -Wno-unused-function -g -I ./include/ -o ./bin/macOS/main src/main.cpp src/glad.c src/textrendering.cpp -framework OpenGL -L/usr/local/lib -L/opt/homebrew/Cellar -lglfw -lm -ldl -lpthread
+	g++ -std=c++11 -Wall -Wno-deprecated-declarations -Wno-unused-function -g -I ./include/ -o ./bin/macOS/main src/main.cpp src/camera.cpp src/textrendering.cpp src/matrices.cpp src/hud.cpp -framework OpenGL -L/usr/local/lib -L/opt/homebrew/Cellar -lglfw -lm -ldl -lpthread
 
 .PHONY: clean run
 clean:

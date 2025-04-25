@@ -10,6 +10,7 @@ set(SOURCES
   src/matrices.cpp
   src/camera.cpp
   src/textrendering.cpp
+  src/hud.cpp
 )
 
 cmake_minimum_required(VERSION 3.10.0)
