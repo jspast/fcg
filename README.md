@@ -1,0 +1,99 @@
+# FCG - Trabalho Final
+
+2025/1 - Turma A
+
+Dupla: João Pastorello e Isadora Schwaab
+
+## Contribuições
+
+## Uso de IAs generativas
+
+## Conceitos de Computação Gráfica aplicados no desenvolvimento
+
+## Manual de usuário
+
+## Compilação
+
+### Windows
+
+#### VSCode (Visual Studio Code)
+1) Instale o [VSCode](https://code.visualstudio.com/).
+
+2) Instale o compilador GCC no Windows seguindo as [instruções do VSCode](https://code.visualstudio.com/docs/cpp/config-mingw#_installing-the-mingww64-toolchain).
+
+3) Instale o [CMake](https://cmake.org/download/).
+
+4) Instale as extensões "ms-vscode.cpptools" e "ms-vscode.cmake-tools" no VSCode.
+Se você abrir o diretório deste projeto no VSCode, automaticamente será sugerida a instalação destas extensões.
+
+5) Abra as configurações da extensão cmake-tools (Ctrl-Shift-P e busque por "CMake: Open CMake Tools Extension Settings"), e adicione o caminho de instalação do GCC na opção de configuração "additionalCompilerSearchDirs".
+
+6) Clique no botão de "Play" na barra inferior do VSCode para compilar e executar o projeto.
+Na primeira compilação, a extensão do CMake para o VSCode irá perguntar qual compilador você quer utilizar.
+Selecione da lista o compilador GCC que você instalou com o MSYS/MinGW.
+
+Se necessário, mais [instruções de uso do CMake no VSCode](https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/README.md) estão disponíveis.
+
+Caso você tenha problemas de compilação no Windows com GCC, cuide para extrair o código em um caminho que não contenha espaços no nome de algum diretório.
+
+Caso você tenha problemas de execução, tente atualizar o driver da sua placa de vídeo.
+
+### Linux
+
+#### Instalando bibliotecas necessárias
+
+##### Ubuntu
+
+```console
+apt-get install build-essential make libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxcb1-dev libxext-dev libxrender-dev libxfixes-dev libxau-dev libxdmcp-dev
+```
+
+##### Linux Mint
+
+```console
+apt-get install build-essential make libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxcb1-dev libxext-dev libxrender-dev libxfixes-dev libxau-dev libxdmcp-dev libmesa-dev libxxf86vm-dev
+```
+
+##### Fedora Linux
+
+```console
+dnf install make automake gcc gcc-c++ kernel-devel libXxf86vm-devel mesa-libGL-devel libxcb-devel libX11-devel libXrandr-devel libXinerama-devel libXcursor-devel libXext-devel libXrender-devel libXfixes-devel libXau-devel libXdmcp-devel
+```
+
+Após a instalação das bibliotecas acima, você possui várias opções para compilação:
+
+#### Makefile
+Abra um terminal no diretório do projeto e execute o comando `make` para compilar.
+Para executar o código compilado, execute o comando `make run`.
+
+#### VSCode (Visual Studio Code)
+1) Instale o [VSCode](https://code.visualstudio.com/).
+
+2) Instale as extensões "ms-vscode.cpptools" e "ms-vscode.cmake-tools" no VSCode.
+Se você abrir o diretório deste projeto no VSCode, automaticamente será sugerida a instalação destas extensões.
+
+3) Clique no botão de "Play" na barra inferior do VSCode para compilar
+e executar o projeto.
+Na primeira compilação, a extensão do CMake para o VSCode irá perguntar qual compilador você quer utilizar.
+Selecione da lista o compilador que você deseja utilizar.
+
+Se necessário, mais [instruções de uso do CMake no VSCode](https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/README.md) estão disponíveis.
+
+### macOS
+Para compilar e executar esse projeto no macOS, primeiro você precisa instalar o HOMEBREW, um gerenciador de pacotes para facilitar a instação de bibliotecas.
+O HOMEBREW pode ser instalado com o seguinte comando no terminal:
+
+```console
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+```
+
+Após a instalação do HOMEBREW, a biblioteca GLFW deve ser instalada.
+Isso pode ser feito pelo terminal com o comando:
+
+```console
+brew install glfw
+```
+
+#### Makefile
+Abra um terminal no diretório do projeto e execute o comando `make -f Makefile.macOS` para compilar.
+Para executar o código compilado, execute o comando `make -f Makefile.macOS run`.
