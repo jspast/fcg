@@ -35,7 +35,7 @@ glm::mat4 Camera::get_projection_matrix()
 
     if (use_perspective_projection)
     {
-        projection = Matrix_Perspective(fov, aspect_ratio, nearplane_distance, farplane_distance);
+        projection = Matrix_Perspective(fov, aspect_ratio, -nearplane_distance, -farplane_distance);
     }
     else
     {
@@ -44,7 +44,7 @@ glm::mat4 Camera::get_projection_matrix()
         float b = -t;
         float r = t * aspect_ratio;
         float l = -r;
-        projection = Matrix_Orthographic(l, r, b, t, nearplane_distance, farplane_distance);
+        projection = Matrix_Orthographic(l, r, b, t, -nearplane_distance, -farplane_distance);
     }
 
     return projection;
