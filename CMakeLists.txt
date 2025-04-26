@@ -8,6 +8,7 @@ set(SOURCES
   src/camera.cpp
   src/textrendering.cpp
   src/hud.cpp
+  src/window.cpp
 )
 
 cmake_minimum_required(VERSION 3.11.0)

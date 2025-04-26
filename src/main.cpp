@@ -21,6 +21,7 @@
 
 // Headers abaixo são específicos de C++
 #include <map>
+#include <new>
 #include <string>
 #include <limits>
 #include <fstream>
@@ -37,13 +38,13 @@
 #include <glm/gtc/type_ptr.hpp>
 
 // Headers locais, definidos na pasta "include/"
-#include "glm/exponential.hpp"
-#include "glm/ext/matrix_clip_space.hpp"
-#include "glm/geometric.hpp"
 #include "utils.h"
 #include "matrices.hpp"
 #include "camera.hpp"
 #include "hud.hpp"
+#include "window.hpp"
+
+#define JOYSTICK_TRESHOLD 0.1
 
 // Declaração de várias funções utilizadas em main().  Essas estão definidas
 // logo após a definição de main() neste arquivo.
@@ -57,11 +58,13 @@ GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id); // 
 // Funções callback para comunicação com o sistema operacional e interação do
 // usuário. Veja mais comentários nas definições das mesmas, abaixo.
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
-void ErrorCallback(int error, const char* description);
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+void JoystickCallback(int jid, int event);
+
+void print_system_info();
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
@@ -85,14 +88,9 @@ FreeCamera free_camera;
 LookAtCamera lookat_camera;
 Camera *camera = &free_camera;
 
-// Ângulos de Euler que controlam a rotação de um dos cubos da cena virtual
-float g_AngleX = 0.0f;
-float g_AngleY = 0.0f;
-float g_AngleZ = 0.0f;
+bool joystick_connected = false;
+int joystick_id = GLFW_JOYSTICK_1;
 
-// "g_LeftMouseButtonPressed = true" se o usuário está com o botão esquerdo do mouse
-// pressionado no momento atual. Veja função MouseButtonCallback().
-bool g_LeftMouseButtonPressed = false;
 bool g_WKeyPressed = false;
 bool g_AKeyPressed = false;
 bool g_SKeyPressed = false;
@@ -106,71 +104,38 @@ GLuint g_GpuProgramID = 0;
 
 int main()
 {
-    // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
-    // sistema operacional, onde poderemos renderizar com OpenGL.
+    glfwSetErrorCallback(glfw_error_callback);
+
     int success = glfwInit();
     if (!success)
-    {
-        fprintf(stderr, "ERROR: glfwInit() failed.\n");
         std::exit(EXIT_FAILURE);
-    }
 
-    // Definimos o callback para impressão de erros da GLFW no terminal
-    glfwSetErrorCallback(ErrorCallback);
-
-    // Pedimos para utilizar OpenGL versão 3.3 (ou superior)
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-
-    #ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    #endif
-
-    // Pedimos para utilizar o perfil "core", isto é, utilizaremos somente as
-    // funções modernas de OpenGL.
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    // Criamos uma janela do sistema operacional, com 800 colunas e 800 linhas
-    // de pixels, e com título "INF01047 ...".
-    GLFWwindow* window;
-    window = glfwCreateWindow(800, 800, "INF01047 - Trabalho Final", NULL, NULL);
-    if (!window)
-    {
-        glfwTerminate();
-        fprintf(stderr, "ERROR: glfwCreateWindow() failed.\n");
-        std::exit(EXIT_FAILURE);
-    }
-
-    // Definimos a função de callback que será chamada sempre que o usuário
-    // pressionar alguma tecla do teclado ...
-    glfwSetKeyCallback(window, KeyCallback);
-    // ... ou clicar os botões do mouse ...
-    glfwSetMouseButtonCallback(window, MouseButtonCallback);
-    // ... ou movimentar o cursor do mouse em cima da janela ...
-    glfwSetCursorPosCallback(window, CursorPosCallback);
-    // ... ou rolar a "rodinha" do mouse.
-    glfwSetScrollCallback(window, ScrollCallback);
+    Window *window = new Window("INF01047 - Trabalho Final");
 
     // Definimos a função de callback que será chamada sempre que a janela for
     // redimensionada, por consequência alterando o tamanho do "framebuffer"
     // (região de memória onde são armazenados os pixels da imagem).
-    glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
-    glfwSetWindowSize(window, 800, 800); // Forçamos a chamada do callback acima, para definir g_ScreenRatio.
+    window->set_framebuffer_size_callback(FramebufferSizeCallback);
 
-    // Indicamos que as chamadas OpenGL deverão renderizar nesta janela
-    glfwMakeContextCurrent(window);
+    // Definimos a função de callback que será chamada sempre que o usuário
+    // pressionar alguma tecla do teclado ...
+    window->set_key_callback(KeyCallback);
+    // ... ou clicar os botões do mouse ...
+    window->set_mouse_button_callback(MouseButtonCallback);
+    // ... ou movimentar o cursor do mouse em cima da janela ...
+    window->set_cursor_pos_callback(CursorPosCallback);
+    // ... ou rolar a "rodinha" do mouse ...
+    window->set_scroll_callback(ScrollCallback);
+    // ... ou usar um controle.
+    window->set_joystick_callback(JoystickCallback);
 
     // Carregamento de todas funções definidas por OpenGL 3.3, utilizando a
     // biblioteca GLAD.
     gladLoadGL(glfwGetProcAddress);
 
-    // Imprimimos no terminal informações sobre a GPU do sistema
-    const GLubyte *vendor      = glGetString(GL_VENDOR);
-    const GLubyte *renderer    = glGetString(GL_RENDERER);
-    const GLubyte *glversion   = glGetString(GL_VERSION);
-    const GLubyte *glslversion = glGetString(GL_SHADING_LANGUAGE_VERSION);
+    joystick_connected = glfwJoystickPresent(joystick_id);
 
-    printf("GPU: %s, %s, OpenGL %s, GLSL %s\n", vendor, renderer, glversion, glslversion);
+    print_system_info();
 
     // Carregamos os shaders de vértices e de fragmentos que serão utilizados
     // para renderização. Veja slides 180-200 do documento Aula_03_Rendering_Pipeline_Grafico.pdf.
@@ -213,7 +178,7 @@ int main()
     float prev_time = (float)glfwGetTime();
 
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
-    while (!glfwWindowShouldClose(window))
+    while (!glfwWindowShouldClose(window->glfw_window))
     {
         // Aqui executamos as operações de renderização
 
@@ -254,6 +219,22 @@ int main()
 
         if (g_DKeyPressed)
             free_camera.move(0.0f, -1.0f * delta_t);
+
+        if (joystick_connected)
+        {
+            int count;
+
+            const float* a = glfwGetJoystickAxes(joystick_id, &count);
+
+            float *b = new float[count];
+
+            for (int i = 0; i < count; i++)
+                b[i] = (abs(a[i]) < JOYSTICK_TRESHOLD) ? 0 : a[i];
+
+            free_camera.move(-b[1] * delta_t, -b[0] * delta_t);
+
+            camera->adjust_angles(-b[3] * 0.01f, b[4] * 0.01f);
+        }
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -297,10 +278,7 @@ int main()
                 // A terceira cópia do cubo sofrerá rotações em X,Y e Z (nessa
                 // ordem) seguindo o sistema de ângulos de Euler, e após uma
                 // translação em X. Veja slides 106-107 do documento Aula_07_Transformacoes_Geometricas_3D.pdf.
-                model = Matrix_Translate(-2.0f, 0.0f, 0.0f) // QUARTO translação
-                      * Matrix_Rotate_Z(g_AngleZ)  // TERCEIRO rotação Z de Euler
-                      * Matrix_Rotate_Y(g_AngleY)  // SEGUNDO rotação Y de Euler
-                      * Matrix_Rotate_X(g_AngleX); // PRIMEIRO rotação X de Euler
+                model = Matrix_Translate(-2.0f, 0.0f, 0.0f); // QUARTO translação
 
                 // Armazenamos as matrizes model, view, e projection do terceiro cubo
                 // para mostrar elas na tela através da função TextRendering_ShowModelViewProjection().
@@ -422,18 +400,14 @@ int main()
             // matrizes the_model, the_view, e the_projection; e escrevemos na tela
             // as matrizes e pontos resultantes dessas transformações.
             glm::vec4 p_model(0.5f, 0.5f, 0.5f, 1.0f);
-            TextRendering_ShowModelViewProjection(window, the_projection, the_view, the_model, p_model);
-
-            // Imprimimos na tela os ângulos de Euler que controlam a rotação do
-            // terceiro cubo.
-            TextRendering_ShowEulerAngles(window, g_AngleX, g_AngleY, g_AngleZ);
+            TextRendering_ShowModelViewProjection(window->glfw_window, the_projection, the_view, the_model, p_model);
 
             // Imprimimos na informação sobre a matriz de projeção sendo utilizada.
-            TextRendering_ShowProjection(window, camera->is_projection_perspective());
+            TextRendering_ShowProjection(window->glfw_window, camera->is_projection_perspective());
 
             // Imprimimos na tela informação sobre o número de quadros renderizados
             // por segundo (frames per second).
-            TextRendering_ShowFramesPerSecond(window);
+            TextRendering_ShowFramesPerSecond(window->glfw_window);
         }
 
         // O framebuffer onde OpenGL executa as operações de renderização não
@@ -442,7 +416,7 @@ int main()
         // chamada abaixo faz a troca dos buffers, mostrando para o usuário
         // tudo que foi renderizado pelas funções acima.
         // Veja o link: https://en.wikipedia.org/w/index.php?title=Multiple_buffering&oldid=793452829#Double_buffering_in_computer_graphics
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(window->glfw_window);
 
         // Verificamos com o sistema operacional se houve alguma interação do
         // usuário (teclado, mouse, ...). Caso positivo, as funções de callback
@@ -450,6 +424,8 @@ int main()
         // pela biblioteca GLFW.
         glfwPollEvents();
     }
+
+    delete window;
 
     // Finalizamos o uso dos recursos do sistema operacional
     glfwTerminate();
@@ -914,43 +890,19 @@ double g_LastCursorPosX, g_LastCursorPosY;
 // Função callback chamada sempre que o usuário aperta algum dos botões do mouse
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-    {
-        // Se o usuário pressionou o botão esquerdo do mouse, guardamos a
-        // posição atual do cursor nas variáveis g_LastCursorPosX e
-        // g_LastCursorPosY.  Também, setamos a variável
-        // g_LeftMouseButtonPressed como true, para saber que o usuário está
-        // com o botão esquerdo pressionado.
-        glfwGetCursorPos(window, &g_LastCursorPosX, &g_LastCursorPosY);
-        g_LeftMouseButtonPressed = true;
-    }
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
-    {
-        // Quando o usuário soltar o botão esquerdo do mouse, atualizamos a
-        // variável abaixo para false.
-        g_LeftMouseButtonPressed = false;
-    }
+
 }
 
 // Função callback chamada sempre que o usuário movimentar o cursor do mouse em
 // cima da janela OpenGL.
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
 {
-    // Abaixo executamos o seguinte: caso o botão esquerdo do mouse esteja
-    // pressionado, computamos quanto que o mouse se movimento desde o último
-    // instante de tempo, e usamos esta movimentação para atualizar os
-    // parâmetros que definem a posição da câmera dentro da cena virtual.
-    // Assim, temos que o usuário consegue controlar a câmera.
-
-    if (!g_LeftMouseButtonPressed)
-        return;
-
     // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
     float dx = xpos - g_LastCursorPosX;
     float dy = ypos - g_LastCursorPosY;
 
     // Atualizamos parâmetros da câmera com os deslocamentos
-    camera->adjust_angles(-0.01f * dx, 0.01f * dy);
+    camera->adjust_angles(-0.001f * dx, 0.001f * dy);
 
     // Atualizamos as variáveis globais para armazenar a posição atual do
     // cursor como sendo a última posição conhecida do cursor.
@@ -958,124 +910,120 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
     g_LastCursorPosY = ypos;
 }
 
+void JoystickCallback(int jid, int event)
+{
+    switch (event) {
+        case GLFW_CONNECTED:
+            joystick_connected = GLFW_TRUE;
+            joystick_id = jid;
+            break;
+
+        case GLFW_DISCONNECTED:
+            joystick_connected = GLFW_FALSE;
+            break;
+    }
+}
+
 // Função callback chamada sempre que o usuário movimenta a "rodinha" do mouse.
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    // Uma câmera look-at nunca pode estar exatamente "em cima" do ponto para
-    // onde ela está olhando, pois isto gera problemas de divisão por zero na
-    // definição do sistema de coordenadas da câmera. Isto é, a variável abaixo
-    // nunca pode ser zero. Versões anteriores deste código possuíam este bug,
-    // o qual foi detectado pelo aluno Vinicius Fraga (2017/2).
     camera->adjust_orthographic_zoom(0.1 * yoffset);
     lookat_camera.adjust_distance(-0.1 * yoffset);
 }
 
 // Definição da função que será chamada sempre que o usuário pressionar alguma
 // tecla do teclado. Veja http://www.glfw.org/docs/latest/input_guide.html#input_key
-void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
+void KeyCallback(GLFWwindow* glfw_window, int key, int scancode, int action, int mod)
 {
-    // ======================
-    // Não modifique este loop! Ele é utilizando para correção automatizada dos
-    // laboratórios. Deve ser sempre o primeiro comando desta função KeyCallback().
-    for (int i = 0; i < 10; ++i)
-        if (key == GLFW_KEY_0 + i && action == GLFW_PRESS && mod == GLFW_MOD_SHIFT)
-            std::exit(100 + i);
-    // ======================
+    Window *window = (Window*)glfwGetWindowUserPointer(glfw_window);
 
-    // Se o usuário pressionar a tecla ESC, fechamos a janela.
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GL_TRUE);
+    switch (key) {
+        // Se o usuário pressionar a tecla ESC, fechamos a janela.
+        case GLFW_KEY_ESCAPE:
+            if (action == GLFW_PRESS)
+                glfwSetWindowShouldClose(glfw_window, GL_TRUE);
+            break;
 
-    // Movimentação da câmera
-    if (key == GLFW_KEY_W && action == GLFW_PRESS)
-        g_WKeyPressed = true;
-    if (key == GLFW_KEY_W && action == GLFW_RELEASE)
-        g_WKeyPressed = false;
+        case GLFW_KEY_F11:
+            if (action == GLFW_PRESS) {
+                window->toggle_fullscreen();
+            }
+            break;
 
-    if (key == GLFW_KEY_A && action == GLFW_PRESS)
-        g_AKeyPressed = true;
-    if (key == GLFW_KEY_A && action == GLFW_RELEASE)
-        g_AKeyPressed = false;
+        case GLFW_KEY_W:
+            if (action == GLFW_PRESS)
+                g_WKeyPressed = true;
+            else if (action == GLFW_RELEASE)
+                g_WKeyPressed = false;
+            break;
 
-    if (key == GLFW_KEY_S && action == GLFW_PRESS)
-        g_SKeyPressed = true;
-    if (key == GLFW_KEY_S && action == GLFW_RELEASE)
-        g_SKeyPressed = false;
+        case GLFW_KEY_A:
+            if (action == GLFW_PRESS)
+                g_AKeyPressed = true;
+            if (action == GLFW_RELEASE)
+                g_AKeyPressed = false;
+            break;
 
-    if (key == GLFW_KEY_D && action == GLFW_PRESS)
-        g_DKeyPressed = true;
-    if (key == GLFW_KEY_D && action == GLFW_RELEASE)
-        g_DKeyPressed = false;
+        case GLFW_KEY_S:
+            if (action == GLFW_PRESS)
+                g_SKeyPressed = true;
+            if (action == GLFW_RELEASE)
+                g_SKeyPressed = false;
+            break;
 
-    // O código abaixo implementa a seguinte lógica:
-    //   Se apertar tecla X       então g_AngleX += delta;
-    //   Se apertar tecla shift+X então g_AngleX -= delta;
-    //   Se apertar tecla Y       então g_AngleY += delta;
-    //   Se apertar tecla shift+Y então g_AngleY -= delta;
-    //   Se apertar tecla Z       então g_AngleZ += delta;
-    //   Se apertar tecla shift+Z então g_AngleZ -= delta;
+        case GLFW_KEY_D:
+            if (action == GLFW_PRESS)
+                g_DKeyPressed = true;
+            if (action == GLFW_RELEASE)
+                g_DKeyPressed = false;
+            break;
 
-    float delta = 3.141592 / 16; // 22.5 graus, em radianos.
+        // Se o usuário apertar a tecla P, utilizamos projeção perspectiva.
+        case GLFW_KEY_P:
+            if (action == GLFW_PRESS)
+                camera->toggle_perspective_projection(true);
+            break;
 
-    if (key == GLFW_KEY_X && action == GLFW_PRESS)
-    {
-        g_AngleX += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
+        // Se o usuário apertar a tecla O, utilizamos projeção ortográfica.
+        case GLFW_KEY_O:
+            if (action == GLFW_PRESS)
+                camera->toggle_perspective_projection(false);
+            break;
 
-    if (key == GLFW_KEY_Y && action == GLFW_PRESS)
-    {
-        g_AngleY += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-    if (key == GLFW_KEY_Z && action == GLFW_PRESS)
-    {
-        g_AngleZ += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
+        // Se o usuário apertar a tecla L, utilizamos câmera Look-At.
+        case GLFW_KEY_L:
+            if (action == GLFW_PRESS)
+            {
+                lookat_camera = build_lookat_camera(camera, 3.0f);
+                camera = &lookat_camera;
+            }
+            break;
 
-    // Se o usuário apertar a tecla espaço, resetamos os ângulos de Euler para zero.
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-    {
-        g_AngleX = 0.0f;
-        g_AngleY = 0.0f;
-        g_AngleZ = 0.0f;
-    }
+        // Se o usuário apertar a tecla F, utilizamos câmera livre.
+        case GLFW_KEY_F:
+            if (action == GLFW_PRESS)
+            {
+                free_camera = build_free_camera(camera);
+                camera = &free_camera;
+            }
+            break;
 
-    // Se o usuário apertar a tecla P, utilizamos projeção perspectiva.
-    if (key == GLFW_KEY_P && action == GLFW_PRESS)
-    {
-        camera->toggle_perspective_projection(true);
-    }
-
-    // Se o usuário apertar a tecla O, utilizamos projeção ortográfica.
-    if (key == GLFW_KEY_O && action == GLFW_PRESS)
-    {
-        camera->toggle_perspective_projection(false);
-    }
-
-    // Se o usuário apertar a tecla L, utilizamos câmera Look-At.
-    if (key == GLFW_KEY_L && action == GLFW_PRESS)
-    {
-        lookat_camera = build_lookat_camera(camera, 3.0f);
-        camera = &lookat_camera;
-    }
-
-    // Se o usuário apertar a tecla F, utilizamos câmera livre.
-    if (key == GLFW_KEY_F && action == GLFW_PRESS)
-    {
-        free_camera = build_free_camera(camera);
-        camera = &free_camera;
-    }
-
-    // Se o usuário apertar a tecla H, fazemos um "toggle" do texto informativo mostrado na tela.
-    if (key == GLFW_KEY_H && action == GLFW_PRESS)
-    {
-        g_ShowInfoText = !g_ShowInfoText;
+        // Se o usuário apertar a tecla H, fazemos um "toggle" do texto informativo mostrado na tela.
+        case GLFW_KEY_H:
+            if (action == GLFW_PRESS)
+                g_ShowInfoText = !g_ShowInfoText;
+            break;
     }
 }
 
-// Definimos o callback para impressão de erros da GLFW no terminal
-void ErrorCallback(int error, const char* description)
+void print_system_info()
 {
-    fprintf(stderr, "ERROR: GLFW: %s\n", description);
+    const GLubyte *vendor      = glGetString(GL_VENDOR);
+    const GLubyte *renderer    = glGetString(GL_RENDERER);
+    const GLubyte *glversion   = glGetString(GL_VERSION);
+    const GLubyte *glslversion = glGetString(GL_SHADING_LANGUAGE_VERSION);
+
+    printf("GPU: %s, %s, OpenGL %s, GLSL %s\n", vendor, renderer, glversion, glslversion);
 }
 
 // set makeprg=cd\ ..\ &&\ make\ run\ >/dev/null
