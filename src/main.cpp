@@ -15,6 +15,7 @@
 //  vira
 //    #include <cstdio> // Em C++
 //
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -171,7 +172,7 @@ int main()
     glm::mat4 the_view;
 
     camera->set_position(2.5f, 2.5f, 2.5f);
-    camera->set_angles(-M_PIf * 0.75, M_PIf / 6);
+    camera->set_angles(-M_PI * 0.75, M_PI / 6);
 
     float delta_t;
     float current_time;

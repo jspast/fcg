@@ -1,10 +1,13 @@
 #pragma once
 
-#include "matrices.hpp"
+#define _USE_MATH_DEFINES
+#include <cmath>
 
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include "matrices.hpp"
 
 #define EPSILON (std::numeric_limits<float>::epsilon())
 #define SQRT_EPSILON (0.000345)
@@ -19,7 +22,7 @@ class Camera {
         glm::vec4 up_vector = glm::vec4(0.0f,1.0f,0.0f,0.0f);
 
         // Phi is limited to (-pi/2, +pi/2) to prevent camera flips
-        constexpr static const float phimax = M_PI_2f - 4 * SQRT_EPSILON;
+        constexpr static const float phimax = M_PI_2 - 4 * SQRT_EPSILON;
         constexpr static const float phimin = -phimax;
 
         // The camera position
@@ -38,11 +41,11 @@ class Camera {
         // Perspective projection is used by default
         bool use_perspective_projection = true;
 
-        float fov          = M_PIf / 3.0f;
+        float fov          = M_PI / 3.0f;
         float aspect_ratio = 1.0f;
 
         // Zoom is simulated in orthographic projection by changing the size of the projection plane
-        float orthographic_zoom = 1.5f;
+        float orthographic_zoom     = 1.5f;
         float orthographic_zoom_min = 1.1f;
         float orthographic_zoom_max = 10.0f;
 

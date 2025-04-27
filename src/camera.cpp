@@ -262,7 +262,7 @@ FreeCamera build_free_camera(Camera* camera)
     FreeCamera fc;
 
     // Update camera angles
-    fc.set_angles(camera->get_theta() + M_PIf, camera->get_phi());
+    fc.set_angles(camera->get_theta() + M_PI, camera->get_phi());
 
     // Copy other camera properties
     fc.set_position(camera->get_position());
@@ -299,7 +299,7 @@ LookAtCamera build_lookat_camera(Camera *camera, glm::vec4 target_position, floa
     lc.set_distance(distance);
 
     // Update camera angles
-    lc.set_angles(camera->get_theta() + M_PIf, camera->get_phi());
+    lc.set_angles(camera->get_theta() + M_PI, camera->get_phi());
 
     // Copy other camera properties
     lc.set_position(camera->get_position());

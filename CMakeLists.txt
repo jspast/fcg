@@ -58,6 +58,8 @@ target_include_directories(${EXECUTABLE_NAME} BEFORE PRIVATE ${PROJECT_SOURCE_DI
 target_include_directories(${EXECUTABLE_NAME} BEFORE PRIVATE ${PROJECT_SOURCE_DIR}/external/glm)
 target_include_directories(${EXECUTABLE_NAME} BEFORE PRIVATE ${PROJECT_SOURCE_DIR}/external)
 
+add_subdirectory(external/glfw)
+
 if(WIN32)
 
   target_link_libraries(${EXECUTABLE_NAME} glfw gdi32 opengl32)
