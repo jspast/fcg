@@ -62,10 +62,6 @@ dnf install make automake gcc gcc-c++ kernel-devel libXxf86vm-devel mesa-libGL-d
 
 Após a instalação das bibliotecas acima, você possui várias opções para compilação:
 
-#### Makefile
-Abra um terminal no diretório do projeto e execute o comando `make` para compilar.
-Para executar o código compilado, execute o comando `make run`.
-
 #### VSCode (Visual Studio Code)
 1) Instale o [VSCode](https://code.visualstudio.com/).
 
