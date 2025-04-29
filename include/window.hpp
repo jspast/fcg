@@ -25,14 +25,17 @@ class Window {
         int windowed_width;
         int windowed_height;
 
-        void resize(int width, int height);
+        int windowed_x;
+        int windowed_y;
+
+        void resize(int width, int height, int x, int y);
 
         void toggle_fullscreen();
         void toggle_fullscreen(bool boolean);
         bool is_fullscreen();
 
         void set_framebuffer_size_callback(void callback(GLFWwindow *, int, int));
-        void set_key_callback(void callback(GLFWwindow *, int, int, int, int) );
+        void set_key_callback(void callback(GLFWwindow *, int, int, int, int));
         void set_mouse_button_callback(void callback(GLFWwindow *, int, int, int));
         void set_cursor_pos_callback(void callback(GLFWwindow *, double, double));
         void set_scroll_callback(void callback(GLFWwindow *, double, double));

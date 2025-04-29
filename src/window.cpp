@@ -87,9 +87,9 @@ void Window::maximize()
     glfwSetWindowMonitor(glfw_window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
 }
 
-void Window::resize(int w, int h)
+void Window::resize(int w, int h, int x, int y)
 {
-    glfwSetWindowMonitor(glfw_window, NULL, 0, 0, w, h, refresh_rate);
+    glfwSetWindowMonitor(glfw_window, NULL, x, y, w, h, refresh_rate);
 }
 
 void Window::toggle_fullscreen()
@@ -99,10 +99,11 @@ void Window::toggle_fullscreen()
     if (fullscreen) {
         // Store the window size before maximazing to allow restoring later
         glfwGetWindowSize(glfw_window, &windowed_width, &windowed_height);
+        glfwGetWindowPos(glfw_window, &windowed_x, &windowed_y);
         maximize();
     }
     else {
-        resize(windowed_width, windowed_height);
+        resize(windowed_width, windowed_height, windowed_x, windowed_y);
     }
 }
 

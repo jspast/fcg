@@ -60,8 +60,6 @@ apt-get install build-essential make libx11-dev libxrandr-dev libxinerama-dev li
 dnf install make automake gcc gcc-c++ kernel-devel libXxf86vm-devel mesa-libGL-devel libxcb-devel libX11-devel libXrandr-devel libXinerama-devel libXcursor-devel libXext-devel libXrender-devel libXfixes-devel libXau-devel libXdmcp-devel
 ```
 
-Após a instalação das bibliotecas acima, você possui várias opções para compilação:
-
 #### VSCode (Visual Studio Code)
 1) Instale o [VSCode](https://code.visualstudio.com/).
 
