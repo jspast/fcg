@@ -52,6 +52,9 @@ Por favor, atualize a lista de arquivos fonte no arquivo CMakeLists.txt.")
   endif()
 endforeach()
 
+# Disable Wayland build for GLFW to avoid missing dependencies on X11 systems
+set(GLFW_BUILD_WAYLAND OFF)
+
 add_executable(${EXECUTABLE_NAME} ${SOURCES})
 
 target_include_directories(${EXECUTABLE_NAME} BEFORE PRIVATE ${PROJECT_SOURCE_DIR}/include)
