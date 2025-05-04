@@ -253,6 +253,20 @@ void FreeCamera::move(float forward_displacement, float left_displacement)
     set_position(get_position() + w_vector * forward_displacement + u_vector * left_displacement);
 }
 
+// Copy camera properties shared between implementations
+void copy_camera(Camera *dst, Camera *src)
+{
+    dst->set_position(src->get_position());
+    dst->set_nearplane_distance(src->get_nearplane_distance());
+    dst->set_farplane_distance(src->get_farplane_distance());
+    dst->toggle_perspective_projection(src->is_projection_perspective());
+    dst->set_aspect_ratio(src->get_aspect_ratio());
+    dst->set_fov(src->get_fov());
+    dst->set_orthographic_zoom(src->get_orthographic_zoom());
+    dst->set_orthographic_zoom_min(src->get_orthographic_zoom_min());
+    dst->set_orthographic_zoom_max(src->get_orthographic_zoom_max());
+}
+
 FreeCamera build_free_camera(Camera* camera)
 {
     // Do nothing if camera is already a FreeCamera
@@ -264,16 +278,7 @@ FreeCamera build_free_camera(Camera* camera)
     // Update camera angles
     fc.set_angles(camera->get_theta() + M_PI, camera->get_phi());
 
-    // Copy other camera properties
-    fc.set_position(camera->get_position());
-    fc.set_nearplane_distance(camera->get_nearplane_distance());
-    fc.set_farplane_distance(camera->get_farplane_distance());
-    fc.toggle_perspective_projection(camera->is_projection_perspective());
-    fc.set_aspect_ratio(camera->get_aspect_ratio());
-    fc.set_fov(camera->get_fov());
-    fc.set_orthographic_zoom(camera->get_orthographic_zoom());
-    fc.set_orthographic_zoom_min(camera->get_orthographic_zoom_min());
-    fc.set_orthographic_zoom_max(camera->get_orthographic_zoom_max());
+    copy_camera(&fc, camera);
 
     return fc;
 }
@@ -301,16 +306,7 @@ LookAtCamera build_lookat_camera(Camera *camera, glm::vec4 target_position, floa
     // Update camera angles
     lc.set_angles(camera->get_theta() + M_PI, camera->get_phi());
 
-    // Copy other camera properties
-    lc.set_position(camera->get_position());
-    lc.set_nearplane_distance(camera->get_nearplane_distance());
-    lc.set_farplane_distance(camera->get_farplane_distance());
-    lc.toggle_perspective_projection(camera->is_projection_perspective());
-    lc.set_aspect_ratio(camera->get_aspect_ratio());
-    lc.set_fov(camera->get_fov());
-    lc.set_orthographic_zoom(camera->get_orthographic_zoom());
-    lc.set_orthographic_zoom_min(camera->get_orthographic_zoom_min());
-    lc.set_orthographic_zoom_max(camera->get_orthographic_zoom_max());
+    copy_camera(&lc, camera);
 
     return lc;
 }
