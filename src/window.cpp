@@ -13,7 +13,7 @@ void glfw_error_callback(int error, const char* description)
     std::cerr << "ERROR: GLFW: " << description << std::endl;
 }
 
-Window::Window(const char* title, int width, int height, bool disable_cursor)
+Window::Window(const char* title, int width, int height, bool enable_cursor)
 {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);
@@ -38,7 +38,7 @@ Window::Window(const char* title, int width, int height, bool disable_cursor)
     if (glfwRawMouseMotionSupported())
         glfwSetInputMode(glfw_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
-    toggle_cursor(!disable_cursor);
+    toggle_cursor(enable_cursor);
 
     // Indicamos que as chamadas OpenGL deverão renderizar nesta janela
     glfwMakeContextCurrent(glfw_window);
@@ -47,6 +47,11 @@ Window::Window(const char* title, int width, int height, bool disable_cursor)
 Window::~Window()
 {
     glfwDestroyWindow(glfw_window);
+}
+
+void Window::set_user_pointer(void *p)
+{
+    glfwSetWindowUserPointer(glfw_window, p);
 }
 
 void Window::set_framebuffer_size_callback(void callback(GLFWwindow *, int, int))
@@ -94,9 +99,14 @@ void Window::resize(int w, int h, int x, int y)
 
 void Window::toggle_fullscreen()
 {
-    fullscreen = !fullscreen;
+    toggle_fullscreen(!fullscreen);
+}
 
-    if (fullscreen) {
+void Window::toggle_fullscreen(bool b)
+{
+    fullscreen = b;
+
+    if (b) {
         // Store the window size before maximazing to allow restoring later
         glfwGetWindowSize(glfw_window, &windowed_width, &windowed_height);
         glfwGetWindowPos(glfw_window, &windowed_x, &windowed_y);
@@ -107,12 +117,6 @@ void Window::toggle_fullscreen()
     }
 }
 
-void Window::toggle_fullscreen(bool b)
-{
-    if (fullscreen != b)
-        toggle_fullscreen();
-}
-
 bool Window::is_fullscreen()
 {
     return fullscreen;
@@ -120,18 +124,17 @@ bool Window::is_fullscreen()
 
 void Window::toggle_cursor()
 {
-    cursor_enabled = !cursor_enabled;
-
-    if (cursor_enabled)
-        glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    else
-        glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    toggle_cursor(!cursor_enabled);
 }
 
 void Window::toggle_cursor(bool b)
 {
-    if (cursor_enabled != b)
-        toggle_cursor();
+    cursor_enabled = b;
+
+    if (b)
+        glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    else
+        glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
 bool Window::is_cursor_enabled()

@@ -15,7 +15,7 @@ class Window {
         void maximize();
 
     public:
-        Window(const char* title, int width=DEFAULT_WIDTH, int height=DEFAULT_HEIGHT, bool disable_cursor=GLFW_FALSE);
+        Window(const char* title, int width=DEFAULT_WIDTH, int height=DEFAULT_HEIGHT, bool enable_cursor=GLFW_FALSE);
         ~Window();
 
         GLFWwindow *glfw_window;
@@ -33,6 +33,8 @@ class Window {
         void toggle_fullscreen();
         void toggle_fullscreen(bool boolean);
         bool is_fullscreen();
+
+        void set_user_pointer(void *user_pointer);
 
         void set_framebuffer_size_callback(void callback(GLFWwindow *, int, int));
         void set_key_callback(void callback(GLFWwindow *, int, int, int, int));
