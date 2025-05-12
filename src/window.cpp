@@ -59,31 +59,6 @@ void Window::set_framebuffer_size_callback(void callback(GLFWwindow *, int, int)
     glfwSetFramebufferSizeCallback(glfw_window, callback);
 }
 
-void Window::set_key_callback(void callback(GLFWwindow *, int, int, int, int))
-{
-    glfwSetKeyCallback(glfw_window, callback);
-}
-
-void Window::set_mouse_button_callback(void callback(GLFWwindow *, int, int, int))
-{
-    glfwSetMouseButtonCallback(glfw_window, callback);
-}
-
-void Window::set_cursor_pos_callback(void callback(GLFWwindow *, double, double))
-{
-    glfwSetCursorPosCallback(glfw_window, callback);
-}
-
-void Window::set_scroll_callback(void callback(GLFWwindow *, double, double))
-{
-    glfwSetScrollCallback(glfw_window, callback);
-}
-
-void Window::set_joystick_callback(void callback(int, int))
-{
-    glfwSetJoystickCallback(callback);
-}
-
 void Window::maximize()
 {
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();

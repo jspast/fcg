@@ -44,6 +44,7 @@
 #include "camera.hpp"
 #include "hud.hpp"
 #include "window.hpp"
+#include "input.hpp"
 
 #define JOYSTICK_TRESHOLD 0.1
 
@@ -56,14 +57,7 @@ GLuint LoadShader_Fragment(const char* filename); // Carrega um fragment shader
 void LoadShader(const char* filename, GLuint shader_id); // Função utilizada pelas duas acima
 GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id); // Cria um programa de GPU
 
-// Funções callback para comunicação com o sistema operacional e interação do
-// usuário. Veja mais comentários nas definições das mesmas, abaixo.
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
-void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);
-void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
-void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
-void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
-void JoystickCallback(int jid, int event);
 
 void print_system_info();
 
@@ -89,14 +83,6 @@ FreeCamera free_camera;
 LookAtCamera lookat_camera;
 Camera *camera = &free_camera;
 
-bool joystick_connected = false;
-int joystick_id = GLFW_JOYSTICK_1;
-
-bool g_WKeyPressed = false;
-bool g_AKeyPressed = false;
-bool g_SKeyPressed = false;
-bool g_DKeyPressed = false;
-
 // Variável que controla se o texto informativo será mostrado na tela.
 bool g_ShowInfoText = true;
 
@@ -118,23 +104,28 @@ int main()
     // (região de memória onde são armazenados os pixels da imagem).
     window->set_framebuffer_size_callback(FramebufferSizeCallback);
 
-    // Definimos a função de callback que será chamada sempre que o usuário
-    // pressionar alguma tecla do teclado ...
-    window->set_key_callback(KeyCallback);
-    // ... ou clicar os botões do mouse ...
-    window->set_mouse_button_callback(MouseButtonCallback);
-    // ... ou movimentar o cursor do mouse em cima da janela ...
-    window->set_cursor_pos_callback(CursorPosCallback);
-    // ... ou rolar a "rodinha" do mouse ...
-    window->set_scroll_callback(ScrollCallback);
-    // ... ou usar um controle.
-    window->set_joystick_callback(JoystickCallback);
+    InputManager base_input(window->glfw_window, {GLFW_KEY_F3, GLFW_KEY_F11, GLFW_KEY_ESCAPE});
+    InputManager game_input(window->glfw_window,
+                            {GLFW_KEY_W,
+                            GLFW_KEY_A,
+                            GLFW_KEY_S,
+                            GLFW_KEY_D,
+                            GLFW_KEY_L,
+                            GLFW_KEY_F,
+                            GLFW_KEY_P,
+                            GLFW_KEY_O},
+                            {},
+                            {},
+                            {GLFW_GAMEPAD_AXIS_LEFT_X,
+                            GLFW_GAMEPAD_AXIS_LEFT_Y,
+                            GLFW_GAMEPAD_AXIS_RIGHT_X,
+                            GLFW_GAMEPAD_AXIS_RIGHT_Y,
+                            GLFW_GAMEPAD_AXIS_LEFT_TRIGGER,
+                            GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER});
 
     // Carregamento de todas funções definidas por OpenGL 3.3, utilizando a
     // biblioteca GLAD.
     gladLoadGL(glfwGetProcAddress);
-
-    joystick_connected = glfwJoystickPresent(joystick_id);
 
     print_system_info();
 
@@ -209,33 +200,67 @@ int main()
         delta_t = current_time - prev_time;
         prev_time = current_time;
 
-        if (g_WKeyPressed)
+        if (base_input.get_is_key_pressed(GLFW_KEY_F3))
+            g_ShowInfoText = !g_ShowInfoText;
+
+        if (base_input.get_is_key_pressed(GLFW_KEY_F11))
+            window->toggle_fullscreen();
+
+        if (base_input.get_is_key_pressed(GLFW_KEY_ESCAPE)) {
+            game_input.set_is_enabled(!game_input.get_is_enabled());
+            window->toggle_cursor();
+        }
+
+        if (game_input.get_is_key_pressed(GLFW_KEY_L)) {
+            lookat_camera = build_lookat_camera(camera, 3.0f);
+            camera = &lookat_camera;
+        }
+
+        if (game_input.get_is_key_pressed(GLFW_KEY_F)) {
+            free_camera = build_free_camera(camera);
+            camera = &free_camera;
+        }
+
+        if (game_input.get_is_key_pressed(GLFW_KEY_P))
+            camera->toggle_perspective_projection(true);
+
+        if (game_input.get_is_key_pressed(GLFW_KEY_O))
+            camera->toggle_perspective_projection(false);
+
+        if (game_input.get_is_key_down(GLFW_KEY_W))
             free_camera.move(1.0f * delta_t, 0.0f);
 
-        if (g_SKeyPressed)
+        if (game_input.get_is_key_down(GLFW_KEY_S))
             free_camera.move(-1.0f * delta_t, 0.0f);
 
-        if (g_AKeyPressed)
+        if (game_input.get_is_key_down(GLFW_KEY_A))
             free_camera.move(0.0f, 1.0f * delta_t);
 
-        if (g_DKeyPressed)
+        if (game_input.get_is_key_down(GLFW_KEY_D))
             free_camera.move(0.0f, -1.0f * delta_t);
 
-        if (joystick_connected)
-        {
-            int count;
+        // Atualizamos parâmetros da câmera com os deslocamentos
+        glm::vec2 cursor_movement = game_input.get_cursor_movement();
+        camera->adjust_angles(-0.001f * cursor_movement.x, 0.001f * cursor_movement.y);
 
-            const float* a = glfwGetJoystickAxes(joystick_id, &count);
+        glm::vec2 scroll = game_input.get_scroll_offset();
+        camera->adjust_orthographic_zoom(0.1 * scroll.y);
+        lookat_camera.adjust_distance(-0.5 * scroll.y);
 
-            float *b = new float[count];
+        free_camera.move(-delta_t * game_input.get_gamepad_axis_value(GLFW_JOYSTICK_1,
+                                                                      GLFW_GAMEPAD_AXIS_LEFT_Y),
+                         -delta_t * game_input.get_gamepad_axis_value(GLFW_JOYSTICK_1,
+                                                                      GLFW_GAMEPAD_AXIS_LEFT_X));
 
-            for (int i = 0; i < count; i++)
-                b[i] = (abs(a[i]) < JOYSTICK_TRESHOLD) ? 0 : a[i];
+        camera->adjust_angles(-delta_t * game_input.get_gamepad_axis_value(GLFW_JOYSTICK_1,
+                                                                         GLFW_GAMEPAD_AXIS_RIGHT_X),
+                              delta_t * game_input.get_gamepad_axis_value(GLFW_JOYSTICK_1,
+                                                                        GLFW_GAMEPAD_AXIS_RIGHT_Y));
 
-            free_camera.move(-b[1] * delta_t, -b[0] * delta_t);
-
-            camera->adjust_angles(-b[3] * 0.01f, b[4] * 0.01f);
-        }
+        lookat_camera.adjust_distance(delta_t * (game_input.get_gamepad_axis_value(GLFW_JOYSTICK_1,
+                                                                                   GLFW_GAMEPAD_AXIS_LEFT_TRIGGER) -
+                                                 game_input.get_gamepad_axis_value(GLFW_JOYSTICK_1,
+                                                                                   GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER)));
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -881,140 +906,6 @@ void FramebufferSizeCallback(GLFWwindow* window, int width, int height)
     // O cast para float é necessário pois números inteiros são arredondados ao
     // serem divididos!
     camera->set_aspect_ratio((float)width / height);
-}
-
-// Variáveis globais que armazenam a última posição do cursor do mouse, para
-// que possamos calcular quanto que o mouse se movimentou entre dois instantes
-// de tempo. Utilizadas no callback CursorPosCallback() abaixo.
-double g_LastCursorPosX, g_LastCursorPosY;
-
-// Função callback chamada sempre que o usuário aperta algum dos botões do mouse
-void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
-{
-
-}
-
-// Função callback chamada sempre que o usuário movimentar o cursor do mouse em
-// cima da janela OpenGL.
-void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
-{
-    // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
-    float dx = xpos - g_LastCursorPosX;
-    float dy = ypos - g_LastCursorPosY;
-
-    // Atualizamos parâmetros da câmera com os deslocamentos
-    camera->adjust_angles(-0.001f * dx, 0.001f * dy);
-
-    // Atualizamos as variáveis globais para armazenar a posição atual do
-    // cursor como sendo a última posição conhecida do cursor.
-    g_LastCursorPosX = xpos;
-    g_LastCursorPosY = ypos;
-}
-
-void JoystickCallback(int jid, int event)
-{
-    switch (event) {
-        case GLFW_CONNECTED:
-            joystick_connected = GLFW_TRUE;
-            joystick_id = jid;
-            break;
-
-        case GLFW_DISCONNECTED:
-            joystick_connected = GLFW_FALSE;
-            break;
-    }
-}
-
-// Função callback chamada sempre que o usuário movimenta a "rodinha" do mouse.
-void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
-{
-    camera->adjust_orthographic_zoom(0.1 * yoffset);
-    lookat_camera.adjust_distance(-0.1 * yoffset);
-}
-
-// Definição da função que será chamada sempre que o usuário pressionar alguma
-// tecla do teclado. Veja http://www.glfw.org/docs/latest/input_guide.html#input_key
-void KeyCallback(GLFWwindow* glfw_window, int key, int scancode, int action, int mod)
-{
-    Window *window = (Window*)glfwGetWindowUserPointer(glfw_window);
-
-    switch (key) {
-        // Se o usuário pressionar a tecla ESC, fechamos a janela.
-        case GLFW_KEY_ESCAPE:
-            if (action == GLFW_PRESS)
-                glfwSetWindowShouldClose(glfw_window, GL_TRUE);
-            break;
-
-        case GLFW_KEY_F11:
-            if (action == GLFW_PRESS) {
-                window->toggle_fullscreen();
-            }
-            break;
-
-        case GLFW_KEY_W:
-            if (action == GLFW_PRESS)
-                g_WKeyPressed = true;
-            else if (action == GLFW_RELEASE)
-                g_WKeyPressed = false;
-            break;
-
-        case GLFW_KEY_A:
-            if (action == GLFW_PRESS)
-                g_AKeyPressed = true;
-            if (action == GLFW_RELEASE)
-                g_AKeyPressed = false;
-            break;
-
-        case GLFW_KEY_S:
-            if (action == GLFW_PRESS)
-                g_SKeyPressed = true;
-            if (action == GLFW_RELEASE)
-                g_SKeyPressed = false;
-            break;
-
-        case GLFW_KEY_D:
-            if (action == GLFW_PRESS)
-                g_DKeyPressed = true;
-            if (action == GLFW_RELEASE)
-                g_DKeyPressed = false;
-            break;
-
-        // Se o usuário apertar a tecla P, utilizamos projeção perspectiva.
-        case GLFW_KEY_P:
-            if (action == GLFW_PRESS)
-                camera->toggle_perspective_projection(true);
-            break;
-
-        // Se o usuário apertar a tecla O, utilizamos projeção ortográfica.
-        case GLFW_KEY_O:
-            if (action == GLFW_PRESS)
-                camera->toggle_perspective_projection(false);
-            break;
-
-        // Se o usuário apertar a tecla L, utilizamos câmera Look-At.
-        case GLFW_KEY_L:
-            if (action == GLFW_PRESS)
-            {
-                lookat_camera = build_lookat_camera(camera, 3.0f);
-                camera = &lookat_camera;
-            }
-            break;
-
-        // Se o usuário apertar a tecla F, utilizamos câmera livre.
-        case GLFW_KEY_F:
-            if (action == GLFW_PRESS)
-            {
-                free_camera = build_free_camera(camera);
-                camera = &free_camera;
-            }
-            break;
-
-        // Se o usuário apertar a tecla H, fazemos um "toggle" do texto informativo mostrado na tela.
-        case GLFW_KEY_H:
-            if (action == GLFW_PRESS)
-                g_ShowInfoText = !g_ShowInfoText;
-            break;
-    }
 }
 
 void print_system_info()

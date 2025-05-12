@@ -9,6 +9,7 @@ set(SOURCES
   src/textrendering.cpp
   src/hud.cpp
   src/window.cpp
+  src/input.cpp
 )
 
 cmake_minimum_required(VERSION 3.11.0)

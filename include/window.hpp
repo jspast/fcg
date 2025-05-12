@@ -37,11 +37,6 @@ class Window {
         void set_user_pointer(void *user_pointer);
 
         void set_framebuffer_size_callback(void callback(GLFWwindow *, int, int));
-        void set_key_callback(void callback(GLFWwindow *, int, int, int, int));
-        void set_mouse_button_callback(void callback(GLFWwindow *, int, int, int));
-        void set_cursor_pos_callback(void callback(GLFWwindow *, double, double));
-        void set_scroll_callback(void callback(GLFWwindow *, double, double));
-        void set_joystick_callback(void callback(int, int));
 
         void toggle_cursor();
         void toggle_cursor(bool boolean);
