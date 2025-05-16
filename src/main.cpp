@@ -104,7 +104,13 @@ int main()
     // (região de memória onde são armazenados os pixels da imagem).
     window->set_framebuffer_size_callback(FramebufferSizeCallback);
 
-    InputManager base_input(window->glfw_window, {GLFW_KEY_F3, GLFW_KEY_F11, GLFW_KEY_ESCAPE});
+    InputManager base_input(window->glfw_window,
+                            {GLFW_KEY_F3,
+                            GLFW_KEY_F11,
+                            GLFW_KEY_ESCAPE},
+                            {},
+                            {GLFW_GAMEPAD_BUTTON_START},
+                            {});
     InputManager game_input(window->glfw_window,
                             {GLFW_KEY_W,
                             GLFW_KEY_A,
@@ -206,7 +212,9 @@ int main()
         if (base_input.get_is_key_pressed(GLFW_KEY_F11))
             window->toggle_fullscreen();
 
-        if (base_input.get_is_key_pressed(GLFW_KEY_ESCAPE)) {
+        if (base_input.get_is_key_pressed(GLFW_KEY_ESCAPE) ||
+            base_input.get_is_gamepad_button_pressed(GLFW_JOYSTICK_1, GLFW_GAMEPAD_BUTTON_START))
+        {
             game_input.set_is_enabled(!game_input.get_is_enabled());
             window->toggle_cursor();
         }
@@ -261,6 +269,8 @@ int main()
                                                                                    GLFW_GAMEPAD_AXIS_LEFT_TRIGGER) -
                                                  game_input.get_gamepad_axis_value(GLFW_JOYSTICK_1,
                                                                                    GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER)));
+        base_input.update();
+        game_input.update();
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.

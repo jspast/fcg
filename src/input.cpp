@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 #include "input.hpp"
@@ -19,10 +20,12 @@ InputManager::InputManager(GLFWwindow *window,
 {
     for (int key : managed_keys) {
         keys[key] = false;
+        last_keys[key] = false;
     }
 
     for (int button : managed_mouse_buttons) {
         mouse_buttons[button] = false;
+        last_mouse_buttons[button] = false;
     }
 
     this->managed_gamepad_buttons = managed_gamepad_buttons;
@@ -69,12 +72,8 @@ bool InputManager::get_is_key_down(int key)
 
 bool InputManager::get_is_key_pressed(int key)
 {
-    bool result = get_is_key_down(key);
-
-    if (result)
-        set_key_down(key, false);
-
-    return result;
+    return get_is_key_down(key) &&
+           keys[key] != last_keys[key];
 }
 
 bool InputManager::get_is_mouse_button_down(int button)
@@ -90,25 +89,43 @@ bool InputManager::get_is_mouse_button_down(int button)
 
 bool InputManager::get_is_mouse_button_pressed(int button)
 {
-    bool result = get_is_mouse_button_down(button);
+    return get_is_mouse_button_down(button) &&
+           mouse_buttons[button] != last_mouse_buttons[button];
+}
 
-    if (result)
-        set_mouse_button_down(button, false);
+void InputManager::update()
+{
+    gamepad_state_is_updated.fill(false);
+    last_keys = keys;
+    last_mouse_buttons = mouse_buttons;
+}
 
-    return result;
+void InputManager::update_gamepad_state(int joystick)
+{
+    gamepad_state_is_updated[joystick] = true;
+    last_gamepad_state = gamepad_state;
+    glfwGetGamepadState(joystick, &gamepad_state[joystick]);
 }
 
 bool InputManager::get_is_gamepad_button_down(int joystick, int button)
 {
-    if (is_enabled && glfwJoystickIsGamepad(joystick) && managed_gamepad_buttons.count(button)) {
+    if (is_enabled &&
+        glfwJoystickIsGamepad(joystick) &&
+        managed_gamepad_buttons.count(button)) {
 
-        GLFWgamepadstate state;
+        if (!gamepad_state_is_updated[joystick])
+            update_gamepad_state(joystick);
 
-        if (glfwGetGamepadState(joystick, &state))
-            return state.buttons[button] != GLFW_RELEASE;
+        return gamepad_state[joystick].buttons[button] == GLFW_PRESS;
     }
 
     return false;
+}
+
+bool InputManager::get_is_gamepad_button_pressed(int joystick, int button)
+{
+    return get_is_gamepad_button_down(joystick, button) &&
+           gamepad_state[joystick].buttons[button] != last_gamepad_state[joystick].buttons[button];
 }
 
 inline float apply_treshold(float value, float treshold)
@@ -120,28 +137,27 @@ float InputManager::get_gamepad_axis_value(int joystick, int axis)
 {
     if (is_enabled && glfwJoystickIsGamepad(joystick) && managed_gamepad_axes.count(axis)) {
 
-        GLFWgamepadstate state;
+        if (!gamepad_state_is_updated[joystick])
+            update_gamepad_state(joystick);
 
-        if (glfwGetGamepadState(joystick, &state)) {
-            float treshold;
+        float treshold;
 
-            switch (axis / 2) {
-                case 0:
-                    treshold = left_stick_treshold.at(joystick);
-                    break;
-                case 1:
-                    treshold = right_stick_treshold.at(joystick);
-                    break;
-                case 2:
-                    if (axis % 2)
-                        treshold = right_trigger_treshold.at(joystick);
-                    else
-                        treshold = left_trigger_treshold.at(joystick);
-                    break;
-            }
-
-            return apply_treshold(state.axes[axis], treshold);
+        switch (axis / 2) {
+            case 0:
+                treshold = left_stick_treshold[joystick];
+                break;
+            case 1:
+                treshold = right_stick_treshold[joystick];
+                break;
+            case 2:
+                if (axis % 2)
+                    treshold = right_trigger_treshold[joystick];
+                else
+                    treshold = left_trigger_treshold[joystick];
+                break;
         }
+
+        return apply_treshold(gamepad_state[joystick].axes[axis], treshold);
     }
 
     return 0.0f;
@@ -149,22 +165,22 @@ float InputManager::get_gamepad_axis_value(int joystick, int axis)
 
 void InputManager::set_left_stick_treshold(int joystick, float treshold)
 {
-    left_stick_treshold.at(joystick) = treshold;
+    left_stick_treshold[joystick] = treshold;
 }
 
 void InputManager::set_right_stick_treshold(int joystick, float treshold)
 {
-    right_stick_treshold.at(joystick) = treshold;
+    right_stick_treshold[joystick] = treshold;
 }
 
 void InputManager::set_left_trigger_treshold(int joystick, float treshold)
 {
-    left_trigger_treshold.at(joystick) = treshold;
+    left_trigger_treshold[joystick] = treshold;
 }
 
 void InputManager::set_right_trigger_treshold(int joystick, float treshold)
 {
-    right_trigger_treshold.at(joystick) = treshold;
+    right_trigger_treshold[joystick] = treshold;
 }
 
 glm::vec2 InputManager::get_cursor_position()
@@ -223,6 +239,7 @@ void InputManager::set_scroll_offset(double x_offset, double y_offset)
     scroll_offset = glm::vec2(x_offset, y_offset);
 }
 
+// Callback functions inspired by: https://stackoverflow.com/a/55582951
 void InputManager::key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     for (InputManager *input_manager : instances)
