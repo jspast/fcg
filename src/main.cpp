@@ -45,8 +45,7 @@
 #include "hud.hpp"
 #include "window.hpp"
 #include "input.hpp"
-
-#define JOYSTICK_TRESHOLD 0.1
+#include "textrendering.hpp"
 
 // Declaração de várias funções utilizadas em main().  Essas estão definidas
 // logo após a definição de main() neste arquivo.
@@ -79,18 +78,15 @@ struct SceneObject
 // estes são acessados.
 std::map<const char*, SceneObject> g_VirtualScene;
 
-FreeCamera free_camera;
-LookAtCamera lookat_camera;
-Camera *camera = &free_camera;
-
-// Variável que controla se o texto informativo será mostrado na tela.
-bool g_ShowInfoText = true;
-
 // Variáveis que definem um programa de GPU (shaders). Veja função LoadShadersFromFiles().
 GLuint g_GpuProgramID = 0;
 
 int main()
 {
+    FreeCamera free_camera;
+    LookAtCamera lookat_camera;
+    Camera *camera = &free_camera;
+
     glfwSetErrorCallback(glfw_error_callback);
 
     int success = glfwInit();
@@ -102,6 +98,7 @@ int main()
     // Definimos a função de callback que será chamada sempre que a janela for
     // redimensionada, por consequência alterando o tamanho do "framebuffer"
     // (região de memória onde são armazenados os pixels da imagem).
+    window->set_user_pointer(camera);
     window->set_framebuffer_size_callback(FramebufferSizeCallback);
 
     InputManager base_input(window->glfw_window,
@@ -132,6 +129,8 @@ int main()
     // Carregamento de todas funções definidas por OpenGL 3.3, utilizando a
     // biblioteca GLAD.
     gladLoadGL(glfwGetProcAddress);
+
+    Hud hud(window->glfw_window);
 
     print_system_info();
 
@@ -207,7 +206,7 @@ int main()
         prev_time = current_time;
 
         if (base_input.get_is_key_pressed(GLFW_KEY_F3))
-            g_ShowInfoText = !g_ShowInfoText;
+            hud.toggle_debug_info();
 
         if (base_input.get_is_key_pressed(GLFW_KEY_F11))
             window->toggle_fullscreen();
@@ -430,21 +429,7 @@ int main()
         // alterar o mesmo. Isso evita bugs.
         glBindVertexArray(0);
 
-        if (g_ShowInfoText) {
-            // Pegamos um vértice com coordenadas de modelo (0.5, 0.5, 0.5, 1) e o
-            // passamos por todos os sistemas de coordenadas armazenados nas
-            // matrizes the_model, the_view, e the_projection; e escrevemos na tela
-            // as matrizes e pontos resultantes dessas transformações.
-            glm::vec4 p_model(0.5f, 0.5f, 0.5f, 1.0f);
-            TextRendering_ShowModelViewProjection(window->glfw_window, the_projection, the_view, the_model, p_model);
-
-            // Imprimimos na informação sobre a matriz de projeção sendo utilizada.
-            TextRendering_ShowProjection(window->glfw_window, camera->is_projection_perspective());
-
-            // Imprimimos na tela informação sobre o número de quadros renderizados
-            // por segundo (frames per second).
-            TextRendering_ShowFramesPerSecond(window->glfw_window);
-        }
+        hud.update(camera->is_projection_perspective());
 
         // O framebuffer onde OpenGL executa as operações de renderização não
         // é o mesmo que está sendo mostrado para o usuário, caso contrário
@@ -902,6 +887,8 @@ GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id)
 // "framebuffer" (região de memória onde são armazenados os pixels da imagem).
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
+    Camera *camera = reinterpret_cast<Camera*>(glfwGetWindowUserPointer(window));
+
     // Indicamos que queremos renderizar em toda região do framebuffer. A
     // função "glViewport" define o mapeamento das "normalized device
     // coordinates" (NDC) para "pixel coordinates".  Essa é a operação de

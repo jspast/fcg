@@ -4,24 +4,29 @@
 
 #include <GLFW/glfw3.h>  // Criação de janelas do sistema operacional
 
-#include <glm/mat4x4.hpp>
-#include <glm/vec4.hpp>
+class Hud {
+    public:
+        Hud(GLFWwindow *window);
 
-// Declaração de funções auxiliares para renderizar texto dentro da janela
-// OpenGL. Estas funções estão definidas no arquivo "textrendering.cpp".
-void TextRendering_Init();
-float TextRendering_LineHeight(GLFWwindow* window);
-float TextRendering_CharWidth(GLFWwindow* window);
-void TextRendering_PrintString(GLFWwindow* window, const std::string &str, float x, float y, float scale = 1.0f);
-void TextRendering_PrintMatrix(GLFWwindow* window, glm::mat4 M, float x, float y, float scale = 1.0f);
-void TextRendering_PrintVector(GLFWwindow* window, glm::vec4 v, float x, float y, float scale = 1.0f);
-void TextRendering_PrintMatrixVectorProduct(GLFWwindow* window, glm::mat4 M, glm::vec4 v, float x, float y, float scale = 1.0f);
-void TextRendering_PrintMatrixVectorProductMoreDigits(GLFWwindow* window, glm::mat4 M, glm::vec4 v, float x, float y, float scale = 1.0f);
-void TextRendering_PrintMatrixVectorProductDivW(GLFWwindow* window, glm::mat4 M, glm::vec4 v, float x, float y, float scale = 1.0f);
+        void toggle_debug_info(bool boolean);
+        void toggle_debug_info();
 
-// Funções abaixo renderizam como texto na janela OpenGL algumas matrizes e
-// outras informações do programa. Definidas após main().
-void TextRendering_ShowModelViewProjection(GLFWwindow* window, glm::mat4 projection, glm::mat4 view, glm::mat4 model, glm::vec4 p_model);
-void TextRendering_ShowEulerAngles(GLFWwindow* window, float AngleX, float AngleY, float AngleZ);
-void TextRendering_ShowProjection(GLFWwindow* window, bool is_perspective);
-void TextRendering_ShowFramesPerSecond(GLFWwindow* window);
+        void update(bool is_perspective);
+
+    private:
+        bool show_debug_info = false;
+
+        std::string debug_vendor;
+        std::string debug_renderer;
+        std::string debug_glversion;
+        std::string debug_glslversion;
+
+        GLFWwindow* window;
+
+        float fps;
+        float frametime;
+
+        void render_debug_info(bool is_perspective);
+
+        void update_timings();
+};

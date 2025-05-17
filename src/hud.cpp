@@ -1,87 +1,44 @@
-#include "matrices.hpp"
+#include <format>
+
+#include <glad/gl.h>
+#include <GLFW/glfw3.h>
+
 #include "hud.hpp"
+#include "textrendering.hpp"
 
-// Esta função recebe um vértice com coordenadas de modelo p_model e passa o
-// mesmo por todos os sistemas de coordenadas armazenados nas matrizes model,
-// view, e projection; e escreve na tela as matrizes e pontos resultantes
-// dessas transformações.
-void TextRendering_ShowModelViewProjection(
-    GLFWwindow* window,
-    glm::mat4 projection,
-    glm::mat4 view,
-    glm::mat4 model,
-    glm::vec4 p_model
-)
+#define TIMINGS_UPDATE_INTERVAL 1.0f
+
+#define BORDER_MARGIN (charwidth)
+
+#define HUD_TOP (1.0f - BORDER_MARGIN)
+#define HUD_BOTTOM (-1.0f + BORDER_MARGIN)
+#define HUD_START (-1.0f + BORDER_MARGIN)
+#define HUD_END (1.0f - BORDER_MARGIN)
+
+Hud::Hud(GLFWwindow *w)
 {
-    glm::vec4 p_world = model*p_model;
-    glm::vec4 p_camera = view*p_world;
-    glm::vec4 p_clip = projection*p_camera;
-    glm::vec4 p_ndc = p_clip / p_clip.w;
+    window = w;
 
-    float pad = TextRendering_LineHeight(window);
-
-    TextRendering_PrintString(window, " Model matrix             Model     In World Coords.", -1.0f, 1.0f-pad, 1.0f);
-    TextRendering_PrintMatrixVectorProduct(window, model, p_model, -1.0f, 1.0f-2*pad, 1.0f);
-
-    TextRendering_PrintString(window, "                                        |  ", -1.0f, 1.0f-6*pad, 1.0f);
-    TextRendering_PrintString(window, "                            .-----------'  ", -1.0f, 1.0f-7*pad, 1.0f);
-    TextRendering_PrintString(window, "                            V              ", -1.0f, 1.0f-8*pad, 1.0f);
-
-    TextRendering_PrintString(window, " View matrix              World     In Camera Coords.", -1.0f, 1.0f-9*pad, 1.0f);
-    TextRendering_PrintMatrixVectorProduct(window, view, p_world, -1.0f, 1.0f-10*pad, 1.0f);
-
-    TextRendering_PrintString(window, "                                        |  ", -1.0f, 1.0f-14*pad, 1.0f);
-    TextRendering_PrintString(window, "                            .-----------'  ", -1.0f, 1.0f-15*pad, 1.0f);
-    TextRendering_PrintString(window, "                            V              ", -1.0f, 1.0f-16*pad, 1.0f);
-
-    TextRendering_PrintString(window, " Projection matrix        Camera                    In NDC", -1.0f, 1.0f-17*pad, 1.0f);
-    TextRendering_PrintMatrixVectorProductDivW(window, projection, p_camera, -1.0f, 1.0f-18*pad, 1.0f);
-
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-
-    glm::vec2 a = glm::vec2(-1, -1);
-    glm::vec2 b = glm::vec2(+1, +1);
-    glm::vec2 p = glm::vec2( 0,  0);
-    glm::vec2 q = glm::vec2(width, height);
-
-    glm::mat4 viewport_mapping = Matrix(
-        (q.x - p.x)/(b.x-a.x), 0.0f, 0.0f, (b.x*p.x - a.x*q.x)/(b.x-a.x),
-        0.0f, (q.y - p.y)/(b.y-a.y), 0.0f, (b.y*p.y - a.y*q.y)/(b.y-a.y),
-        0.0f , 0.0f , 1.0f , 0.0f ,
-        0.0f , 0.0f , 0.0f , 1.0f
-    );
-
-    TextRendering_PrintString(window, "                                                       |  ", -1.0f, 1.0f-22*pad, 1.0f);
-    TextRendering_PrintString(window, "                            .--------------------------'  ", -1.0f, 1.0f-23*pad, 1.0f);
-    TextRendering_PrintString(window, "                            V                           ", -1.0f, 1.0f-24*pad, 1.0f);
-
-    TextRendering_PrintString(window, " Viewport matrix           NDC      In Pixel Coords.", -1.0f, 1.0f-25*pad, 1.0f);
-    TextRendering_PrintMatrixVectorProductMoreDigits(window, viewport_mapping, p_ndc, -1.0f, 1.0f-26*pad, 1.0f);
+    debug_vendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+    debug_renderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
+    debug_glversion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+    debug_glslversion = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
 }
 
-// Escrevemos na tela qual matriz de projeção está sendo utilizada.
-void TextRendering_ShowProjection(GLFWwindow* window, bool is_perspective)
+void Hud::toggle_debug_info(bool b)
 {
-    float lineheight = TextRendering_LineHeight(window);
-    float charwidth = TextRendering_CharWidth(window);
-
-    if ( is_perspective )
-        TextRendering_PrintString(window, "Perspective", 1.0f-13*charwidth, -1.0f+2*lineheight/10, 1.0f);
-    else
-        TextRendering_PrintString(window, "Orthographic", 1.0f-13*charwidth, -1.0f+2*lineheight/10, 1.0f);
+    show_debug_info = b;
 }
 
-// Escrevemos na tela o número de quadros renderizados por segundo (frames per
-// second).
-void TextRendering_ShowFramesPerSecond(GLFWwindow* window)
+void Hud::toggle_debug_info()
 {
-    // Variáveis estáticas (static) mantém seus valores entre chamadas
-    // subsequentes da função!
+    toggle_debug_info(!show_debug_info);
+}
+
+void Hud::update_timings()
+{
     static float old_seconds = (float)glfwGetTime();
-    static int   ellapsed_frames = 0;
-    static char  buffer[20] = "?? fps";
-    static int   numchars = 7;
+    static int ellapsed_frames = 0;
 
     ellapsed_frames += 1;
 
@@ -91,16 +48,39 @@ void TextRendering_ShowFramesPerSecond(GLFWwindow* window)
     // Número de segundos desde o último cálculo do fps
     float ellapsed_seconds = seconds - old_seconds;
 
-    if ( ellapsed_seconds > 1.0f )
+    if (ellapsed_seconds > TIMINGS_UPDATE_INTERVAL)
     {
-        numchars = snprintf(buffer, 20, "%.2f fps", ellapsed_frames / ellapsed_seconds);
+        fps = ellapsed_frames / ellapsed_seconds;
+        frametime = 1000 * ellapsed_seconds / ellapsed_frames;
 
         old_seconds = seconds;
         ellapsed_frames = 0;
     }
+}
 
+void Hud::update(bool is_perspective)
+{
+    update_timings();
+
+    if (show_debug_info)
+        render_debug_info(is_perspective);
+}
+
+void Hud::render_debug_info(bool is_perspective)
+{
     float lineheight = TextRendering_LineHeight(window);
     float charwidth = TextRendering_CharWidth(window);
 
-    TextRendering_PrintString(window, buffer, 1.0f-(numchars + 1)*charwidth, 1.0f-lineheight, 1.0f);
+    TextRendering_PrintString(window, std::format("GPU: {}, {}\n", debug_vendor, debug_renderer),
+                              HUD_START, HUD_TOP - lineheight);
+    TextRendering_PrintString(window, std::format("OpenGL {}, GLSL {}\n", debug_glversion, debug_glslversion),
+                              HUD_START, HUD_TOP - 2*lineheight);
+
+    TextRendering_PrintString(window, std::format("{:.2f} FPS", fps),
+                              HUD_START, HUD_TOP - 4*lineheight, 1.25f);
+    TextRendering_PrintString(window, std::format("Frametime: {:.2f} ms", frametime),
+                              HUD_START, HUD_TOP - 5*lineheight);
+
+    TextRendering_PrintString(window, is_perspective ? "Perspective" : "Orthographic",
+                              HUD_START, HUD_BOTTOM + 2*lineheight/10);
 }
