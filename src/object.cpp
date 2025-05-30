@@ -1,5 +1,5 @@
+#include <iostream>
 #include <stack>
-#include <stdexcept>
 
 #include <glad/gl.h>
 #include <tiny_obj_loader.h>
@@ -8,56 +8,43 @@
 
 #include "object.hpp"
 
-ObjModel::ObjModel(const char* filename, const char* basepath, bool triangulate)
+ObjModel::ObjModel(std::string inputfile, std::string mtl_search_path, bool triangulate)
 {
-    printf("Carregando objetos do arquivo \"%s\"...\n", filename);
+    tinyobj::ObjReaderConfig reader_config;
+    tinyobj::ObjReader reader;
 
-    // Se basepath == NULL, então setamos basepath como o dirname do
-    // filename, para que os arquivos MTL sejam corretamente carregados caso
+    // Se mtl_search_path é vazio, então setamos mtl_search_path como o dirname do
+    // inputfile, para que os arquivos MTL sejam corretamente carregados caso
     // estejam no mesmo diretório dos arquivos OBJ.
-    std::string fullpath(filename);
+    std::string fullpath(inputfile);
     std::string dirname;
-    if (basepath == NULL)
+    if (mtl_search_path.empty())
     {
         auto i = fullpath.find_last_of("/");
         if (i != std::string::npos)
-        {
-            dirname = fullpath.substr(0, i+1);
-            basepath = dirname.c_str();
+            mtl_search_path = fullpath.substr(0, i+1);
+    }
+    reader_config.mtl_search_path = mtl_search_path;
+
+    if (!reader.ParseFromFile(inputfile, reader_config)) {
+        if (!reader.Error().empty()) {
+            std::cerr << "TinyObjReader: " << reader.Error();
         }
+    exit(1);
     }
 
-    std::string warn;
-    std::string err;
-    bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filename, basepath, triangulate);
-
-    if (!err.empty())
-        fprintf(stderr, "\n%s\n", err.c_str());
-
-    if (!ret)
-        throw std::runtime_error("Erro ao carregar modelo.");
-
-    for (size_t shape = 0; shape < shapes.size(); ++shape)
-    {
-        if (shapes[shape].name.empty())
-        {
-            fprintf(stderr,
-                    "*********************************************\n"
-                    "Erro: Objeto sem nome dentro do arquivo '%s'.\n"
-                    "Veja https://www.inf.ufrgs.br/~eslgastal/fcg-faq-etc.html#Modelos-3D-no-formato-OBJ .\n"
-                    "*********************************************\n",
-                filename);
-            throw std::runtime_error("Objeto sem nome.");
-        }
-        printf("- Objeto '%s'\n", shapes[shape].name.c_str());
+    if (!reader.Warning().empty()) {
+        std::cout << "TinyObjReader: " << reader.Warning();
     }
 
-    printf("OK.\n");
+    attrib = reader.GetAttrib();
+    shapes = reader.GetShapes();
+    materials = reader.GetMaterials();
 }
 
 void ObjModel:: compute_normals()
 {
-    if ( !attrib.normals.empty() )
+    if (!attrib.normals.empty())
         return;
 
     // Primeiro computamos as normais para todos os TRIÂNGULOS.

@@ -22,7 +22,7 @@ class ObjModel {
 
         int object_id;
 
-        ObjModel(const char* filename, const char* basepath = NULL, bool triangulate = true);
+        ObjModel(std::string inputfile, std::string mtl_search_path = "", bool triangulate = true);
 
         void compute_normals();
 
