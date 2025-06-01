@@ -1,5 +1,5 @@
+#include <algorithm>
 #include <iostream>
-#include <stack>
 
 #include <glad/gl.h>
 #include <tiny_obj_loader.h>
@@ -7,6 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "object.hpp"
+#include "gpu.hpp"
 
 ObjModel::ObjModel(std::string inputfile, std::string mtl_search_path, bool triangulate)
 {
@@ -139,6 +140,14 @@ void ObjModel::build_triangles()
                 model_coefficients.push_back( vz ); // Z
                 model_coefficients.push_back( 1.0f ); // W
 
+                aabb.min_x = std::min(aabb.min_x, vx);
+                aabb.min_y = std::min(aabb.min_y, vy);
+                aabb.min_z = std::min(aabb.min_z, vz);
+
+                aabb.max_x = std::max(aabb.max_x, vx);
+                aabb.max_y = std::max(aabb.max_y, vy);
+                aabb.max_z = std::max(aabb.max_z, vz);
+
                 // Inspecionando o código da tinyobjloader, o aluno Bernardo
                 // Sulzbach (2017/1) apontou que a maneira correta de testar se
                 // existem normais e coordenadas de textura no ObjModel é
@@ -240,7 +249,7 @@ void ObjModel::draw()
         GL_TRIANGLES,
         num_indices,
         GL_UNSIGNED_INT,
-        (void*)(0 * sizeof(GLuint))
+        (void*)(0)
     );
 
     // "Desligamos" o VAO, evitando assim que operações posteriores venham a
@@ -248,54 +257,39 @@ void ObjModel::draw()
     glBindVertexArray(0);
 }
 
-Object::Object(ObjModel& m, glm::mat4 transf_matrix) : model(m)
+Object::Object(ObjModel& m, GpuProgram& gpu) : model(m), gpu_program(gpu) {}
+
+void Object::draw(const glm::mat4 parent_transform)
 {
-    transformation_matrix = transf_matrix;
-}
+    glm::mat4 t = parent_transform * transform;
 
-void Object::draw(GLint model_uniform, GLint object_id_uniform)
-{
-    MatrixStack matrix_stack;
+    apply_uniforms();
 
-    draw_object(this, matrix_stack, model_uniform, object_id_uniform);
-}
+    // Always set model matrix
+    gpu_program.set_uniform("model", t);
 
-void draw_object(Object* root, MatrixStack matrix_stack, GLint model_uniform, GLint object_id_uniform)
-{
-    if (!root)
-        return;
+    model.draw();
 
-    glm::mat4 t_matrix = matrix_stack.top() * root->transformation_matrix;
-
-    matrix_stack.push(t_matrix);
-
-    glUniformMatrix4fv(model_uniform, 1, GL_FALSE, glm::value_ptr(t_matrix));
-    glUniform1i(object_id_uniform, root->model.object_id);
-
-    root->model.draw();
-
-    for (Object* child : root->children) {
-
-        draw_object(child, matrix_stack, model_uniform, object_id_uniform);
+    for (Object* child : children) {
+        child->draw(t);
     }
-
-    matrix_stack.pop();
 }
 
-void MatrixStack::push(glm::mat4 m)
+void Object::set_transform(glm::mat4 t)
 {
-    stack.push(m);
+    transform = t;
 }
 
-glm::mat4 MatrixStack::top()
+void Object::set_uniform(std::string_view name, UniformValue value)
 {
-    if (stack.empty())
-        return Matrix_Identity();
-    else
-        return stack.top();
+    uniforms[name.data()] = value;
 }
 
-void MatrixStack::pop()
+void Object::apply_uniforms()
 {
-    stack.pop();
+    for (const auto& [name, value] : uniforms) {
+        std::visit([&](auto&& v) {
+            gpu_program.set_uniform(name, v);
+        }, value);
+    }
 }

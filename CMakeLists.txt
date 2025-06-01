@@ -11,6 +11,9 @@ set(SOURCES
   src/window.cpp
   src/input.cpp
   src/object.cpp
+  src/chess_game.cpp
+  src/chess_renderer.cpp
+  src/gpu.cpp
 )
 
 cmake_minimum_required(VERSION 3.11.0)

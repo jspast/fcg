@@ -13,10 +13,23 @@ uniform mat4 view;
 uniform mat4 projection;
 
 // Identificador que define qual objeto está sendo desenhado no momento
-#define SPHERE 0
-#define BUNNY  1
-#define PLANE  2
+#define SQUARE 0
+#define PIECE 1
+#define TABLE 2
 uniform int object_id;
+
+#define LIGHT 0
+#define DARK 1
+uniform int object_color;
+
+#define NONE 0
+#define SELECTING 1
+#define SELECTED 2
+#define LAST_MOVE 3
+#define AVAILABLE_MOVE 4
+#define AVAILABLE_CAPTURE 5
+#define CHECK 6
+uniform int square_state;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -39,8 +52,12 @@ void main()
     // normais de cada vértice.
     vec4 n = normalize(normal);
 
+    vec4 l_pos = vec4(4.0,4.0,4.0,1.0);
+    vec4 l_vec = vec4(0.0,-1.0,0.0,0.0);
+    float a = radians(30.0);
+
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4 l = normalize(camera_position - p);
+    vec4 l = normalize(l_pos - p);
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
@@ -54,36 +71,76 @@ void main()
     vec3 Ka; // Refletância ambiente
     float q; // Expoente especular para o modelo de iluminação de Phong
 
-    if ( object_id == SPHERE )
-    {
-        // Propriedades espectrais da esfera
-        Kd = vec3(0.8,0.4,0.08);
-        Ks = vec3(0.0,0.0,0.0);
-        Ka = vec3(0.4,0.2,0.04);
-        q = 1.0;
-    }
-    else if ( object_id == BUNNY )
-    {
-        // Propriedades espectrais do coelho
-        Kd = vec3(0.08,0.4,0.8);
-        Ks = vec3(0.8 ,0.8,0.8);
-        Ka = vec3(0.04,0.2,0.4);
-        q = 32.0;
-    }
-    else if ( object_id == PLANE )
-    {
-        // Propriedades espectrais do plano
-        Kd = vec3(0.2,0.2,0.2);
-        Ks = vec3(0.3,0.3,0.3);
-        Ka = vec3(0.0,0.0,0.0);
-        q = 20.0;
-    }
-    else // Objeto desconhecido = preto
-    {
-        Kd = vec3(0.0,0.0,0.0);
-        Ks = vec3(0.0,0.0,0.0);
-        Ka = vec3(0.0,0.0,0.0);
-        q = 1.0;
+    switch (object_id) {
+        // Propriedades espectrais das casas do tabuleiro
+        case SQUARE:
+            switch (object_color) {
+                case LIGHT:
+                    Kd = vec3(0.9,0.8,0.7);
+                    Ks = vec3(0.0,0.0,0.0);
+                    Ka = vec3(0.6,0.5,0.4);
+                    q = 1.0;
+                    break;
+
+                case DARK:
+                    Kd = vec3(0.4,0.2,0.1);
+                    Ks = vec3(0.5,0.5,0.5);
+                    Ka = vec3(0.4,0.2,0.1);
+                    q = 32.0;
+                    break;
+            }
+            switch (square_state) {
+                case SELECTING:
+                    Kd *= vec3(0.0,2.0,0.0);
+                    Ka *= vec3(0.0,2.0,0.0);
+                    break;
+
+                case SELECTED:
+                    Kd *= vec3(0.0,3.0,0.0);
+                    Ka *= vec3(0.0,3.0,0.0);
+                    break;
+
+                case LAST_MOVE:
+                    Kd *= vec3(0.0,1.5,0.0);
+                    Ka *= vec3(0.0,1.5,0.0);
+                    break;
+            }
+            break;
+
+        // Propriedades espectrais das peças
+        case PIECE:
+            switch (object_color) {
+                case LIGHT:
+                    Kd = vec3(0.9,0.8,0.7);
+                    Ks = vec3(0.0,0.0,0.0);
+                    Ka = vec3(0.6,0.5,0.4);
+                    q = 1.0;
+                    break;
+
+                case DARK:
+                    Kd = vec3(0.2,0.2,0.2);
+                    Ks = vec3(0.5,0.5,0.5);
+                    Ka = vec3(0.2,0.2,0.2);
+                    q = 32.0;
+                    break;
+            }
+            break;
+
+        // Propriedades espectrais da mesa
+        case TABLE:
+            Kd = vec3(0.2,0.2,0.2);
+            Ks = vec3(0.3,0.3,0.3);
+            Ka = vec3(0.0,0.0,0.0);
+            q = 20.0;
+            break;
+
+        // Objeto desconhecido = preto
+        default:
+            Kd = vec3(0.0,0.0,0.0);
+            Ks = vec3(0.0,0.0,0.0);
+            Ka = vec3(0.0,0.0,0.0);
+            q = 1.0;
+            break;
     }
 
     // Espectro da fonte de iluminação

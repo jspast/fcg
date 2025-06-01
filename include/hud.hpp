@@ -2,7 +2,9 @@
 
 #include <string>
 
-#include <GLFW/glfw3.h>  // Criação de janelas do sistema operacional
+#include <GLFW/glfw3.h>
+
+#include "camera.hpp"
 
 class Hud {
     public:
@@ -11,7 +13,7 @@ class Hud {
         void toggle_debug_info(bool boolean);
         void toggle_debug_info();
 
-        void update(bool is_perspective);
+        void update(Camera& camera);
 
     private:
         bool show_debug_info = false;
@@ -26,7 +28,7 @@ class Hud {
         float fps;
         float frametime;
 
-        void render_debug_info(bool is_perspective);
+        void render_debug_info(Camera& camera);
 
         void update_timings();
 };

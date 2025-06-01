@@ -11,7 +11,7 @@
 #include "utils.h"
 #include "dejavufont.h"
 
-GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id); // Função definida em main.cpp
+#include "gpu.hpp"
 
 const GLchar* const textvertexshader_source = ""
 "#version 330\n"
@@ -35,53 +35,6 @@ const GLchar* const textfragmentshader_source = ""
 "}\n"
 "\0";
 
-void TextRendering_LoadShader(const GLchar* const shader_string, GLuint shader_id)
-{
-    // Define o código do shader, contido na string "shader_string"
-    glShaderSource(shader_id, 1, &shader_string, NULL);
-
-    // Compila o código do shader (em tempo de execução)
-    glCompileShader(shader_id);
-
-    // Verificamos se ocorreu algum erro ou "warning" durante a compilação
-    GLint compiled_ok;
-    glGetShaderiv(shader_id, GL_COMPILE_STATUS, &compiled_ok);
-
-    GLint log_length = 0;
-    glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &log_length);
-
-    // Alocamos memória para guardar o log de compilação.
-    // A chamada "new" em C++ é equivalente ao "malloc()" do C.
-    GLchar* log = new GLchar[log_length];
-    glGetShaderInfoLog(shader_id, log_length, &log_length, log);
-
-    // Imprime no terminal qualquer erro ou "warning" de compilação
-    if ( log_length != 0 )
-    {
-        std::string  output;
-
-        if ( !compiled_ok )
-        {
-            output += "ERROR: OpenGL compilation failed.\n";
-            output += "== Start of compilation log\n";
-            output += log;
-            output += "== End of compilation log\n";
-        }
-        else
-        {
-            output += "ERROR: OpenGL compilation failed.\n";
-            output += "== Start of compilation log\n";
-            output += log;
-            output += "== End of compilation log\n";
-        }
-
-        fprintf(stderr, "%s", output.c_str());
-    }
-
-    // A chamada "delete" em C++ é equivalente ao "free()" do C
-    delete [] log;
-}
-
 GLuint textVAO;
 GLuint textVBO;
 GLuint textprogram_id;
@@ -101,15 +54,9 @@ void TextRendering_Init()
     glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glCheckError();
 
-    GLuint textvertexshader_id = glCreateShader(GL_VERTEX_SHADER);
-    TextRendering_LoadShader(textvertexshader_source, textvertexshader_id);
-    glCheckError();
+    GpuProgram gpu_program = GpuProgram(textvertexshader_source, textfragmentshader_source);
 
-    GLuint textfragmentshader_id = glCreateShader(GL_FRAGMENT_SHADER);
-    TextRendering_LoadShader(textfragmentshader_source, textfragmentshader_id);
-    glCheckError();
-
-    textprogram_id = CreateGpuProgram(textvertexshader_id, textfragmentshader_id);
+    textprogram_id = gpu_program.id;
     glLinkProgram(textprogram_id);
     glCheckError();
 

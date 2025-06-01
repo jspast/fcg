@@ -15,18 +15,18 @@
 //  vira
 //    #include <cstdio> // Em C++
 //
+#include "chess.hpp"
+#include "chess_game.hpp"
+#include "chess_renderer.hpp"
+#include "gpu.hpp"
+
 #define _USE_MATH_DEFINES
-#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 
 // Headers abaixo são específicos de C++
-#include <map>
 #include <new>
 #include <string>
-#include <limits>
-#include <fstream>
-#include <sstream>
 
 #include "object.hpp"
 
@@ -52,26 +52,18 @@
 #include "input.hpp"
 #include "textrendering.hpp"
 
-// Declaração de várias funções utilizadas em main().  Essas estão definidas
-// logo após a definição de main() neste arquivo.
-void LoadShadersFromFiles(); // Carrega os shaders de vértice e fragmento, criando um programa de GPU
-GLuint LoadShader_Vertex(const char* filename);   // Carrega um vertex shader
-GLuint LoadShader_Fragment(const char* filename); // Carrega um fragment shader
-void LoadShader(const char* filename, GLuint shader_id); // Função utilizada pelas duas acima
-GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id); // Cria um programa de GPU
-
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 
 void print_system_info();
-
-// Variáveis que definem um programa de GPU (shaders). Veja função LoadShadersFromFiles().
-GLuint g_GpuProgramID = 0;
 
 int main()
 {
     FreeCamera free_camera;
     LookAtCamera lookat_camera;
-    Camera *camera = &free_camera;
+    Camera *camera = &lookat_camera;
+
+    lookat_camera.set_target_position(4.0f, 0.0f, 4.0f);
+    lookat_camera.set_distance(10.0f);
 
     glfwSetErrorCallback(glfw_error_callback);
 
@@ -102,7 +94,12 @@ int main()
                             GLFW_KEY_L,
                             GLFW_KEY_F,
                             GLFW_KEY_P,
-                            GLFW_KEY_O},
+                            GLFW_KEY_O,
+                            GLFW_KEY_UP,
+                            GLFW_KEY_LEFT,
+                            GLFW_KEY_DOWN,
+                            GLFW_KEY_RIGHT,
+                            GLFW_KEY_ENTER},
                             {},
                             {},
                             {GLFW_GAMEPAD_AXIS_LEFT_X,
@@ -116,34 +113,47 @@ int main()
     // biblioteca GLAD.
     gladLoadGL(glfwGetProcAddress);
 
+    GpuProgram gpu_program = GpuProgram();
+
     Hud hud(window->glfw_window);
 
     print_system_info();
 
-    // Carregamos os shaders de vértices e de fragmentos que serão utilizados
-    // para renderização. Veja slides 180-200 do documento Aula_03_Rendering_Pipeline_Grafico.pdf.
-    //
-    LoadShadersFromFiles();
-
     ObjModel bunny_model("../../data/models/bunny.obj");
-    // ObjModel bunny_model("../../data/models/pieces/black/pawn.obj");
-    bunny_model.object_id = 1;
     bunny_model.compute_normals();
     bunny_model.build_triangles();
 
     Object* bunnies[32];
 
     for (int i = 0; i < 8; i++) {
-        bunnies[i] = new Object(bunny_model, Matrix_Translate(i * 2, 0, 0));
+        bunnies[i] = new Object(bunny_model, gpu_program);
+        bunnies[i]->set_transform(Matrix_Translate(0.5, 0.5, i + 0.5) *
+                                  Matrix_Scale(0.5, 0.5, 0.5) *
+                                  Matrix_Rotate_Y(M_PI));
+        bunnies[i]->set_uniform("object_id", PIECE);
+        bunnies[i]->set_uniform("object_color", LIGHT);
     }
     for (int i = 0; i < 8; i++) {
-        bunnies[i + 8] = new Object(bunny_model, Matrix_Translate(i * 2, 0, 2));
+        bunnies[i + 8] = new Object(bunny_model, gpu_program);
+        bunnies[i + 8]->set_transform(Matrix_Translate(1.5, 0.5, i + 0.5) *
+                                      Matrix_Scale(0.5, 0.5, 0.5) *
+                                      Matrix_Rotate_Y(M_PI));
+        bunnies[i + 8]->set_uniform("object_id", PIECE);
+        bunnies[i + 8]->set_uniform("object_color", LIGHT);
     }
     for (int i = 0; i < 8; i++) {
-        bunnies[i + 16] = new Object(bunny_model, Matrix_Translate(i * 2, 0, 12));
+        bunnies[i + 16] = new Object(bunny_model, gpu_program);
+        bunnies[i + 16]->set_transform(Matrix_Translate(6.5, 0.5, i + 0.5) *
+                                       Matrix_Scale(0.5, 0.5, 0.5));
+        bunnies[i + 16]->set_uniform("object_id", PIECE);
+        bunnies[i + 16]->set_uniform("object_color", DARK);
     }
     for (int i = 0; i < 8; i++) {
-        bunnies[i + 24] = new Object(bunny_model, Matrix_Translate(i * 2, 0, 14));
+        bunnies[i + 24] = new Object(bunny_model, gpu_program);
+        bunnies[i + 24]->set_transform(Matrix_Translate(7.5, 0.5, i + 0.5) *
+                                       Matrix_Scale(0.5, 0.5, 0.5));
+        bunnies[i + 24]->set_uniform("object_id", PIECE);
+        bunnies[i + 24]->set_uniform("object_color", DARK);
     }
 
     // Inicializamos o código para renderização de texto.
@@ -152,10 +162,11 @@ int main()
     // Buscamos o endereço das variáveis definidas dentro do Vertex Shader.
     // Utilizaremos estas variáveis para enviar dados para a placa de vídeo
     // (GPU)! Veja arquivo "shader_vertex.glsl".
-    GLint model_uniform           = glGetUniformLocation(g_GpuProgramID, "model"); // Variável da matriz "model"
-    GLint view_uniform            = glGetUniformLocation(g_GpuProgramID, "view"); // Variável da matriz "view" em shader_vertex.glsl
-    GLint projection_uniform      = glGetUniformLocation(g_GpuProgramID, "projection"); // Variável da matriz "projection" em shader_vertex.glsl
-    GLint object_id_uniform       = glGetUniformLocation(g_GpuProgramID, "object_id"); // Variável "object_id" em shader_fragment.glsl
+    GLint view_uniform            = gpu_program.get_uniform_location("view");
+    GLint projection_uniform      = gpu_program.get_uniform_location("projection");
+
+    ChessGame chess_game = ChessGame();
+    ChessRenderer chess_renderer(chess_game, gpu_program);
 
     // Habilitamos o Z-buffer. Veja slides 104-116 do documento Aula_09_Projecoes.pdf.
     glEnable(GL_DEPTH_TEST);
@@ -164,9 +175,6 @@ int main()
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
-
-    camera->set_position(2.5f, 2.5f, 2.5f);
-    camera->set_angles(-M_PI * 0.75, M_PI / 6);
 
     float delta_t;
     float current_time;
@@ -191,7 +199,7 @@ int main()
 
         // Pedimos para a GPU utilizar o programa de GPU criado acima (contendo
         // os shaders de vértice e fragmentos).
-        glUseProgram(g_GpuProgramID);
+        glUseProgram(gpu_program.id);
 
         // Atualiza delta de tempo
         current_time = (float)glfwGetTime();
@@ -212,14 +220,28 @@ int main()
         }
 
         if (game_input.get_is_key_pressed(GLFW_KEY_L)) {
-            lookat_camera = build_lookat_camera(camera, 3.0f);
+            lookat_camera = build_lookat_camera(camera, glm::vec4(4.0f, 0.0f, 4.0f, 1.0f), 10.0f);
             camera = &lookat_camera;
+            window->set_user_pointer(camera);
         }
 
         if (game_input.get_is_key_pressed(GLFW_KEY_F)) {
             free_camera = build_free_camera(camera);
             camera = &free_camera;
+            window->set_user_pointer(camera);
         }
+
+        if (game_input.get_is_key_pressed(GLFW_KEY_UP))
+            chess_renderer.move_selecting_square(chess::Direction::NORTH);
+
+        if (game_input.get_is_key_pressed(GLFW_KEY_DOWN))
+            chess_renderer.move_selecting_square(chess::Direction::SOUTH);
+
+        if (game_input.get_is_key_pressed(GLFW_KEY_LEFT))
+            chess_renderer.move_selecting_square(chess::Direction::WEST);
+
+        if (game_input.get_is_key_pressed(GLFW_KEY_RIGHT))
+            chess_renderer.move_selecting_square(chess::Direction::EAST);
 
         if (game_input.get_is_key_pressed(GLFW_KEY_P))
             camera->toggle_perspective_projection(true);
@@ -276,9 +298,11 @@ int main()
         glUniformMatrix4fv(projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
         for (int i = 0; i < 32; i++)
-            bunnies[i]->draw(model_uniform, object_id_uniform);
+            bunnies[i]->draw();
 
-        hud.update(camera->is_projection_perspective());
+        chess_renderer.draw();
+
+        hud.update(*camera);
 
         // O framebuffer onde OpenGL executa as operações de renderização não
         // é o mesmo que está sendo mostrado para o usuário, caso contrário
@@ -302,185 +326,6 @@ int main()
 
     // Fim do programa
     return 0;
-}
-
-// Carrega um Vertex Shader de um arquivo GLSL. Veja definição de LoadShader() abaixo.
-GLuint LoadShader_Vertex(const char* filename)
-{
-    // Criamos um identificador (ID) para este shader, informando que o mesmo
-    // será aplicado nos vértices.
-    GLuint vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
-
-    // Carregamos e compilamos o shader
-    LoadShader(filename, vertex_shader_id);
-
-    // Retorna o ID gerado acima
-    return vertex_shader_id;
-}
-
-// Carrega um Fragment Shader de um arquivo GLSL . Veja definição de LoadShader() abaixo.
-GLuint LoadShader_Fragment(const char* filename)
-{
-    // Criamos um identificador (ID) para este shader, informando que o mesmo
-    // será aplicado nos fragmentos.
-    GLuint fragment_shader_id = glCreateShader(GL_FRAGMENT_SHADER);
-
-    // Carregamos e compilamos o shader
-    LoadShader(filename, fragment_shader_id);
-
-    // Retorna o ID gerado acima
-    return fragment_shader_id;
-}
-
-// Função auxilar, utilizada pelas duas funções acima. Carrega código de GPU de
-// um arquivo GLSL e faz sua compilação.
-void LoadShader(const char* filename, GLuint shader_id)
-{
-    // Lemos o arquivo de texto indicado pela variável "filename"
-    // e colocamos seu conteúdo em memória, apontado pela variável
-    // "shader_string".
-    std::ifstream file;
-    try {
-        file.exceptions(std::ifstream::failbit);
-        file.open(filename);
-    } catch ( std::exception& e ) {
-        fprintf(stderr, "ERROR: Cannot open file \"%s\".\n", filename);
-        std::exit(EXIT_FAILURE);
-    }
-    std::stringstream shader;
-    shader << file.rdbuf();
-    std::string str = shader.str();
-    const GLchar* shader_string = str.c_str();
-    const GLint   shader_string_length = static_cast<GLint>( str.length() );
-
-    // Define o código do shader GLSL, contido na string "shader_string"
-    glShaderSource(shader_id, 1, &shader_string, &shader_string_length);
-
-    // Compila o código do shader GLSL (em tempo de execução)
-    glCompileShader(shader_id);
-
-    // Verificamos se ocorreu algum erro ou "warning" durante a compilação
-    GLint compiled_ok;
-    glGetShaderiv(shader_id, GL_COMPILE_STATUS, &compiled_ok);
-
-    GLint log_length = 0;
-    glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &log_length);
-
-    // Alocamos memória para guardar o log de compilação.
-    // A chamada "new" em C++ é equivalente ao "malloc()" do C.
-    GLchar* log = new GLchar[log_length];
-    glGetShaderInfoLog(shader_id, log_length, &log_length, log);
-
-    // Imprime no terminal qualquer erro ou "warning" de compilação
-    if ( log_length != 0 )
-    {
-        std::string  output;
-
-        if ( !compiled_ok )
-        {
-            output += "ERROR: OpenGL compilation of \"";
-            output += filename;
-            output += "\" failed.\n";
-            output += "== Start of compilation log\n";
-            output += log;
-            output += "== End of compilation log\n";
-        }
-        else
-        {
-            output += "WARNING: OpenGL compilation of \"";
-            output += filename;
-            output += "\".\n";
-            output += "== Start of compilation log\n";
-            output += log;
-            output += "== End of compilation log\n";
-        }
-
-        fprintf(stderr, "%s", output.c_str());
-    }
-
-    // A chamada "delete" em C++ é equivalente ao "free()" do C
-    delete [] log;
-}
-
-// Função que carrega os shaders de vértices e de fragmentos que serão
-// utilizados para renderização. Veja slides 180-200 do documento Aula_03_Rendering_Pipeline_Grafico.pdf.
-//
-void LoadShadersFromFiles()
-{
-    // Note que o caminho para os arquivos "shader_vertex.glsl" e
-    // "shader_fragment.glsl" estão fixados, sendo que assumimos a existência
-    // da seguinte estrutura no sistema de arquivos:
-    //
-    //    + FCG_Lab_01/
-    //    |
-    //    +--+ bin/
-    //    |  |
-    //    |  +--+ Release/  (ou Debug/ ou Linux/)
-    //    |     |
-    //    |     o-- main.exe
-    //    |
-    //    +--+ src/
-    //       |
-    //       o-- shader_vertex.glsl
-    //       |
-    //       o-- shader_fragment.glsl
-    //
-    GLuint vertex_shader_id = LoadShader_Vertex("../../src/shader_vertex.glsl");
-    GLuint fragment_shader_id = LoadShader_Fragment("../../src/shader_fragment.glsl");
-
-    // Deletamos o programa de GPU anterior, caso ele exista.
-    if ( g_GpuProgramID != 0 )
-        glDeleteProgram(g_GpuProgramID);
-
-    // Criamos um programa de GPU utilizando os shaders carregados acima.
-    g_GpuProgramID = CreateGpuProgram(vertex_shader_id, fragment_shader_id);
-}
-
-// Esta função cria um programa de GPU, o qual contém obrigatoriamente um
-// Vertex Shader e um Fragment Shader.
-GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id)
-{
-    // Criamos um identificador (ID) para este programa de GPU
-    GLuint program_id = glCreateProgram();
-
-    // Definição dos dois shaders GLSL que devem ser executados pelo programa
-    glAttachShader(program_id, vertex_shader_id);
-    glAttachShader(program_id, fragment_shader_id);
-
-    // Linkagem dos shaders acima ao programa
-    glLinkProgram(program_id);
-
-    // Verificamos se ocorreu algum erro durante a linkagem
-    GLint linked_ok = GL_FALSE;
-    glGetProgramiv(program_id, GL_LINK_STATUS, &linked_ok);
-
-    // Imprime no terminal qualquer erro de linkagem
-    if ( linked_ok == GL_FALSE )
-    {
-        GLint log_length = 0;
-        glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &log_length);
-
-        // Alocamos memória para guardar o log de compilação.
-        // A chamada "new" em C++ é equivalente ao "malloc()" do C.
-        GLchar* log = new GLchar[log_length];
-
-        glGetProgramInfoLog(program_id, log_length, &log_length, log);
-
-        std::string output;
-
-        output += "ERROR: OpenGL linking of program failed.\n";
-        output += "== Start of link log\n";
-        output += log;
-        output += "\n== End of link log\n";
-
-        // A chamada "delete" em C++ é equivalente ao "free()" do C
-        delete [] log;
-
-        fprintf(stderr, "%s", output.c_str());
-    }
-
-    // Retornamos o ID gerado acima
-    return program_id;
 }
 
 // Definição da função que será chamada sempre que a janela do sistema

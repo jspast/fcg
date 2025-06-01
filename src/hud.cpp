@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 
 #include "hud.hpp"
+#include "glm/ext/vector_float4.hpp"
 #include "textrendering.hpp"
 
 #define TIMINGS_UPDATE_INTERVAL 1.0f
@@ -58,22 +59,24 @@ void Hud::update_timings()
     }
 }
 
-void Hud::update(bool is_perspective)
+void Hud::update(Camera& c)
 {
     update_timings();
 
     if (show_debug_info)
-        render_debug_info(is_perspective);
+        render_debug_info(c);
 }
 
-void Hud::render_debug_info(bool is_perspective)
+void Hud::render_debug_info(Camera& c)
 {
     float lineheight = TextRendering_LineHeight(window);
     float charwidth = TextRendering_CharWidth(window);
 
-    TextRendering_PrintString(window, std::format("GPU: {}, {}\n", debug_vendor, debug_renderer),
+    TextRendering_PrintString(window, std::format("GPU: {}, {}\n",
+                                        debug_vendor, debug_renderer),
                               HUD_START, HUD_TOP - lineheight);
-    TextRendering_PrintString(window, std::format("OpenGL {}, GLSL {}\n", debug_glversion, debug_glslversion),
+    TextRendering_PrintString(window, std::format("OpenGL {}, GLSL {}\n",
+                                        debug_glversion, debug_glslversion),
                               HUD_START, HUD_TOP - 2*lineheight);
 
     TextRendering_PrintString(window, std::format("{:.2f} FPS", fps),
@@ -81,6 +84,12 @@ void Hud::render_debug_info(bool is_perspective)
     TextRendering_PrintString(window, std::format("Frametime: {:.2f} ms", frametime),
                               HUD_START, HUD_TOP - 5*lineheight);
 
-    TextRendering_PrintString(window, is_perspective ? "Perspective" : "Orthographic",
+    glm::vec4 cam_pos = c.get_position();
+
+    TextRendering_PrintString(window, std::format("Camera position: X: {:.2f} Y: {:.2f} Z: {:.2f}",
+                                        cam_pos.x, cam_pos.y, cam_pos.z),
+                              HUD_START, HUD_TOP - 7*lineheight);
+
+    TextRendering_PrintString(window, c.is_projection_perspective() ? "Perspective" : "Orthographic",
                               HUD_START, HUD_BOTTOM + 2*lineheight/10);
 }
