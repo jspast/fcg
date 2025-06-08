@@ -42,6 +42,8 @@ class ObjModel {
         void build_triangles();
         void draw();
 
+        void print_info();
+
     private:
         size_t num_indices;
         GLuint vao_id;

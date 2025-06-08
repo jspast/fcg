@@ -17,7 +17,6 @@
 //
 #include "chess.hpp"
 #include "chess_game.hpp"
-#include "chess_renderer.hpp"
 #include "gpu.hpp"
 
 #define _USE_MATH_DEFINES
@@ -62,8 +61,8 @@ int main()
     LookAtCamera lookat_camera;
     Camera *camera = &lookat_camera;
 
-    lookat_camera.set_target_position(4.0f, 0.0f, 4.0f);
-    lookat_camera.set_distance(10.0f);
+    lookat_camera.set_target_position(0.0f, 1.0f, 0.0f);
+    lookat_camera.set_distance(2.0f);
 
     glfwSetErrorCallback(glfw_error_callback);
 
@@ -82,7 +81,8 @@ int main()
     InputManager base_input(window->glfw_window,
                             {GLFW_KEY_F3,
                             GLFW_KEY_F11,
-                            GLFW_KEY_ESCAPE},
+                            GLFW_KEY_ESCAPE,
+                            GLFW_KEY_R},
                             {},
                             {GLFW_GAMEPAD_BUTTON_START},
                             {});
@@ -119,42 +119,33 @@ int main()
 
     print_system_info();
 
-    ObjModel bunny_model("../../data/models/bunny.obj");
-    bunny_model.compute_normals();
-    bunny_model.build_triangles();
+    ObjModel table_model("../../data/models/table/table.obj");
+    table_model.build_triangles();
+    gpu_program.load_texture_from_file("../../data/models/table/" + table_model.materials[0].diffuse_texname,
+                                       "TableImage");
+    gpu_program.load_texture_from_file("../../data/models/table/" + table_model.materials[0].ambient_texname,
+                                       "TableAmbient");
+    gpu_program.load_texture_from_file("../../data/models/table/" + table_model.materials[0].roughness_texname,
+                                       "TableRoughness");
+    Object table(table_model, gpu_program);
+    table.set_uniform("object_id", TABLE);
 
-    Object* bunnies[32];
+    ObjModel board_model("../../data/models/board/board.obj");
+    board_model.build_triangles();
+    gpu_program.load_texture_from_file("../../data/models/board/" + board_model.materials[0].diffuse_texname,
+                                   "BoardImage");
+    gpu_program.load_texture_from_file("../../data/models/board/" + board_model.materials[0].ambient_texname,
+                                   "BoardAmbient");
+    gpu_program.load_texture_from_file("../../data/models/board/" + board_model.materials[0].roughness_texname,
+                                   "BoardRoughness");
+    Object board(board_model, gpu_program);
+    board.set_uniform("object_id", BOARD);
+    board.set_uniform("selecting_square_row", 0);
+    board.set_uniform("selecting_square_line", 0);
+    board.set_transform(Matrix_Translate(0.0f, table.model.aabb.max_y, 0.0f) *
+                        Matrix_Scale(1.5f, 1.5f, 1.5f));
 
-    for (int i = 0; i < 8; i++) {
-        bunnies[i] = new Object(bunny_model, gpu_program);
-        bunnies[i]->set_transform(Matrix_Translate(0.5, 0.5, i + 0.5) *
-                                  Matrix_Scale(0.5, 0.5, 0.5) *
-                                  Matrix_Rotate_Y(M_PI));
-        bunnies[i]->set_uniform("object_id", PIECE);
-        bunnies[i]->set_uniform("object_color", LIGHT);
-    }
-    for (int i = 0; i < 8; i++) {
-        bunnies[i + 8] = new Object(bunny_model, gpu_program);
-        bunnies[i + 8]->set_transform(Matrix_Translate(1.5, 0.5, i + 0.5) *
-                                      Matrix_Scale(0.5, 0.5, 0.5) *
-                                      Matrix_Rotate_Y(M_PI));
-        bunnies[i + 8]->set_uniform("object_id", PIECE);
-        bunnies[i + 8]->set_uniform("object_color", LIGHT);
-    }
-    for (int i = 0; i < 8; i++) {
-        bunnies[i + 16] = new Object(bunny_model, gpu_program);
-        bunnies[i + 16]->set_transform(Matrix_Translate(6.5, 0.5, i + 0.5) *
-                                       Matrix_Scale(0.5, 0.5, 0.5));
-        bunnies[i + 16]->set_uniform("object_id", PIECE);
-        bunnies[i + 16]->set_uniform("object_color", DARK);
-    }
-    for (int i = 0; i < 8; i++) {
-        bunnies[i + 24] = new Object(bunny_model, gpu_program);
-        bunnies[i + 24]->set_transform(Matrix_Translate(7.5, 0.5, i + 0.5) *
-                                       Matrix_Scale(0.5, 0.5, 0.5));
-        bunnies[i + 24]->set_uniform("object_id", PIECE);
-        bunnies[i + 24]->set_uniform("object_color", DARK);
-    }
+    table.children.push_back(&board);
 
     // Inicializamos o código para renderização de texto.
     TextRendering_Init();
@@ -166,7 +157,6 @@ int main()
     GLint projection_uniform      = gpu_program.get_uniform_location("projection");
 
     ChessGame chess_game = ChessGame();
-    ChessRenderer chess_renderer(chess_game, gpu_program);
 
     // Habilitamos o Z-buffer. Veja slides 104-116 do documento Aula_09_Projecoes.pdf.
     glEnable(GL_DEPTH_TEST);
@@ -212,6 +202,9 @@ int main()
         if (base_input.get_is_key_pressed(GLFW_KEY_F11))
             window->toggle_fullscreen();
 
+        if (base_input.get_is_key_pressed(GLFW_KEY_R))
+            gpu_program.reload_shaders();
+
         if (base_input.get_is_key_pressed(GLFW_KEY_ESCAPE) ||
             base_input.get_is_gamepad_button_pressed(GLFW_JOYSTICK_1, GLFW_GAMEPAD_BUTTON_START))
         {
@@ -220,7 +213,7 @@ int main()
         }
 
         if (game_input.get_is_key_pressed(GLFW_KEY_L)) {
-            lookat_camera = build_lookat_camera(camera, glm::vec4(4.0f, 0.0f, 4.0f, 1.0f), 10.0f);
+            lookat_camera = build_lookat_camera(camera, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 2.0f);
             camera = &lookat_camera;
             window->set_user_pointer(camera);
         }
@@ -231,17 +224,37 @@ int main()
             window->set_user_pointer(camera);
         }
 
-        if (game_input.get_is_key_pressed(GLFW_KEY_UP))
-            chess_renderer.move_selecting_square(chess::Direction::NORTH);
+        if (game_input.get_is_key_pressed(GLFW_KEY_UP)) {
+            chess::Square new_square = chess_game.move_selecting_square(chess::Direction::NORTH);
+            if (new_square != chess::Square::NO_SQ) {
+                board.set_uniform("selecting_square_file", new_square.file());
+                board.set_uniform("selecting_square_rank", new_square.rank());
+            }
+        }
 
-        if (game_input.get_is_key_pressed(GLFW_KEY_DOWN))
-            chess_renderer.move_selecting_square(chess::Direction::SOUTH);
+        if (game_input.get_is_key_pressed(GLFW_KEY_DOWN)) {
+            chess::Square new_square = chess_game.move_selecting_square(chess::Direction::SOUTH);
+            if (new_square != chess::Square::NO_SQ) {
+                board.set_uniform("selecting_square_file", new_square.file());
+                board.set_uniform("selecting_square_rank", new_square.rank());
+            }
+        }
 
-        if (game_input.get_is_key_pressed(GLFW_KEY_LEFT))
-            chess_renderer.move_selecting_square(chess::Direction::WEST);
+        if (game_input.get_is_key_pressed(GLFW_KEY_LEFT)) {
+            chess::Square new_square = chess_game.move_selecting_square(chess::Direction::WEST);
+            if (new_square != chess::Square::NO_SQ) {
+                board.set_uniform("selecting_square_file", new_square.file());
+                board.set_uniform("selecting_square_rank", new_square.rank());
+            }
+        }
 
-        if (game_input.get_is_key_pressed(GLFW_KEY_RIGHT))
-            chess_renderer.move_selecting_square(chess::Direction::EAST);
+        if (game_input.get_is_key_pressed(GLFW_KEY_RIGHT)) {
+            chess::Square new_square = chess_game.move_selecting_square(chess::Direction::EAST);
+            if (new_square != chess::Square::NO_SQ) {
+                board.set_uniform("selecting_square_file", new_square.file());
+                board.set_uniform("selecting_square_rank", new_square.rank());
+            }
+        }
 
         if (game_input.get_is_key_pressed(GLFW_KEY_P))
             camera->toggle_perspective_projection(true);
@@ -297,10 +310,7 @@ int main()
         glUniformMatrix4fv(view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
-        for (int i = 0; i < 32; i++)
-            bunnies[i]->draw();
-
-        chess_renderer.draw();
+        table.draw();
 
         hud.update(*camera);
 

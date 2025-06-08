@@ -7,6 +7,9 @@
 in vec4 position_world;
 in vec4 normal;
 
+// Posição do vértice atual no sistema de coordenadas local do modelo.
+in vec4 position_model;
+
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
 uniform mat4 view;
@@ -16,6 +19,7 @@ uniform mat4 projection;
 #define SQUARE 0
 #define PIECE 1
 #define TABLE 2
+#define BOARD 3
 uniform int object_id;
 
 #define LIGHT 0
@@ -31,8 +35,26 @@ uniform int object_color;
 #define CHECK 6
 uniform int square_state;
 
+uniform int selecting_square_file;
+uniform int selecting_square_rank;
+
+// Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
+in vec2 texcoords;
+
+// Variáveis para acesso das imagens de textura
+uniform sampler2D BoardImage;
+uniform sampler2D BoardAmbient;
+uniform sampler2D BoardRoughness;
+
+uniform sampler2D TableImage;
+uniform sampler2D TableAmbient;
+uniform sampler2D TableRoughness;
+
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
+
+#define SQUARE_SIZE 0.05789
+#define BOARD_START -4 * 0.05789
 
 void main()
 {
@@ -70,6 +92,10 @@ void main()
     vec3 Ks; // Refletância especular
     vec3 Ka; // Refletância ambiente
     float q; // Expoente especular para o modelo de iluminação de Phong
+
+    // Coordenadas de textura U e V
+    float U = texcoords.x;
+    float V = texcoords.y;
 
     switch (object_id) {
         // Propriedades espectrais das casas do tabuleiro
@@ -128,10 +154,24 @@ void main()
 
         // Propriedades espectrais da mesa
         case TABLE:
-            Kd = vec3(0.2,0.2,0.2);
-            Ks = vec3(0.3,0.3,0.3);
-            Ka = vec3(0.0,0.0,0.0);
-            q = 20.0;
+            Kd = texture(TableImage, vec2(U,V)).rgb;
+            Ks = 0.1 - texture(TableRoughness, vec2(U,V)).rgb;
+            Ka = 0.01 * texture(TableAmbient, vec2(U,V)).rgb;
+            q = 64.0;
+            break;
+
+        // Propriedades espectrais do tabuleiro
+        case BOARD:
+            Kd = texture(BoardImage, vec2(U,V)).rgb;
+            Ks = 0.3 - texture(BoardRoughness, vec2(U,V)).rgb;
+            Ka = 0.01 * texture(BoardAmbient, vec2(U,V)).rgb;
+            q = 16.0;
+
+            if (position_model.x >= BOARD_START + (7 - selecting_square_file) * 0.05789 &&
+                position_model.x <= BOARD_START + (8 - selecting_square_file) * 0.05789 &&
+                position_model.z >= BOARD_START + selecting_square_rank * 0.05789 &&
+                position_model.z <= BOARD_START + (selecting_square_rank + 1) * 0.05789)
+                Kd.g += 0.5;
             break;
 
         // Objeto desconhecido = preto
