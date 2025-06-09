@@ -8,10 +8,9 @@
 
 #include <glad/gl.h>
 
-#define SQUARE 0
+#define BOARD 0
 #define PIECE 1
 #define TABLE 2
-#define BOARD 3
 
 #define LIGHT 0
 #define DARK 1
@@ -31,7 +30,8 @@ class GpuProgram {
         GLuint vertex_shader_id;
         GLuint fragment_shader_id;
 
-        GLuint num_loaded_textures = 0; 
+        GLuint num_loaded_textures = 0;
+        std::vector<std::string_view> texture_uniforms;
 
         static void load_shader_from_file(std::string_view filename, GLuint shader_id);
         static void load_shader_from_source(const GLchar* const shader_string,
@@ -57,6 +57,7 @@ class GpuProgram {
 
         void set_uniform(std::string_view name, float value);
         void set_uniform(std::string_view name, int value);
+        void set_uniform(std::string_view name, glm::vec2 value);
         void set_uniform(std::string_view name, glm::vec4 value);
         void set_uniform(std::string_view name, glm::mat4 value);
 

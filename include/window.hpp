@@ -1,6 +1,7 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
+#include <glm/vec2.hpp>
 
 #define DEFAULT_WIDTH   800
 #define DEFAULT_HEIGHT  800
@@ -12,14 +13,6 @@ class Window {
         bool fullscreen = GLFW_FALSE;
         bool cursor_enabled = GLFW_FALSE;
 
-        void maximize();
-
-    public:
-        Window(const char* title, int width=DEFAULT_WIDTH, int height=DEFAULT_HEIGHT, bool enable_cursor=GLFW_FALSE);
-        ~Window();
-
-        GLFWwindow *glfw_window;
-
         int refresh_rate;
 
         int windowed_width;
@@ -28,7 +21,17 @@ class Window {
         int windowed_x;
         int windowed_y;
 
+        void maximize();
+
+    public:
+        Window(const char* title, int width=DEFAULT_WIDTH, int height=DEFAULT_HEIGHT, bool enable_cursor=GLFW_FALSE);
+        ~Window();
+
+        GLFWwindow *glfw_window;
+
         void resize(int width, int height, int x, int y);
+
+        glm::vec2 get_size();
 
         void toggle_fullscreen();
         void toggle_fullscreen(bool boolean);

@@ -16,10 +16,9 @@ uniform mat4 view;
 uniform mat4 projection;
 
 // Identificador que define qual objeto está sendo desenhado no momento
-#define SQUARE 0
+#define BOARD 0
 #define PIECE 1
 #define TABLE 2
-#define BOARD 3
 uniform int object_id;
 
 #define LIGHT 0
@@ -35,8 +34,11 @@ uniform int object_color;
 #define CHECK 6
 uniform int square_state;
 
-uniform int selecting_square_file;
-uniform int selecting_square_rank;
+uniform vec2 selecting_square;
+uniform vec2 selected_square;
+
+uniform vec2 lastmove_start_square;
+uniform vec2 lastmove_end_square;
 
 // Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
 in vec2 texcoords;
@@ -98,41 +100,6 @@ void main()
     float V = texcoords.y;
 
     switch (object_id) {
-        // Propriedades espectrais das casas do tabuleiro
-        case SQUARE:
-            switch (object_color) {
-                case LIGHT:
-                    Kd = vec3(0.9,0.8,0.7);
-                    Ks = vec3(0.0,0.0,0.0);
-                    Ka = vec3(0.6,0.5,0.4);
-                    q = 1.0;
-                    break;
-
-                case DARK:
-                    Kd = vec3(0.4,0.2,0.1);
-                    Ks = vec3(0.5,0.5,0.5);
-                    Ka = vec3(0.4,0.2,0.1);
-                    q = 32.0;
-                    break;
-            }
-            switch (square_state) {
-                case SELECTING:
-                    Kd *= vec3(0.0,2.0,0.0);
-                    Ka *= vec3(0.0,2.0,0.0);
-                    break;
-
-                case SELECTED:
-                    Kd *= vec3(0.0,3.0,0.0);
-                    Ka *= vec3(0.0,3.0,0.0);
-                    break;
-
-                case LAST_MOVE:
-                    Kd *= vec3(0.0,1.5,0.0);
-                    Ka *= vec3(0.0,1.5,0.0);
-                    break;
-            }
-            break;
-
         // Propriedades espectrais das peças
         case PIECE:
             switch (object_color) {
@@ -167,10 +134,10 @@ void main()
             Ka = 0.01 * texture(BoardAmbient, vec2(U,V)).rgb;
             q = 16.0;
 
-            if (position_model.x >= BOARD_START + (7 - selecting_square_file) * 0.05789 &&
-                position_model.x <= BOARD_START + (8 - selecting_square_file) * 0.05789 &&
-                position_model.z >= BOARD_START + selecting_square_rank * 0.05789 &&
-                position_model.z <= BOARD_START + (selecting_square_rank + 1) * 0.05789)
+            if (position_model.x >= BOARD_START + (7 - selecting_square.x) * 0.05789 &&
+                position_model.x <= BOARD_START + (8 - selecting_square.x) * 0.05789 &&
+                position_model.z >= BOARD_START + selecting_square.y * 0.05789 &&
+                position_model.z <= BOARD_START + (selecting_square.y + 1) * 0.05789)
                 Kd.g += 0.5;
             break;
 

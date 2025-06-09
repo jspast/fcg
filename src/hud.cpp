@@ -59,15 +59,15 @@ void Hud::update_timings()
     }
 }
 
-void Hud::update(Camera& c)
+void Hud::update(Camera& c, glm::vec2 cursor, glm::vec4 cursor_intersection)
 {
     update_timings();
 
     if (show_debug_info)
-        render_debug_info(c);
+        render_debug_info(c, cursor, cursor_intersection);
 }
 
-void Hud::render_debug_info(Camera& c)
+void Hud::render_debug_info(Camera& c, glm::vec2 cursor, glm::vec4 cursor_intersection)
 {
     float lineheight = TextRendering_LineHeight(window);
     float charwidth = TextRendering_CharWidth(window);
@@ -89,6 +89,14 @@ void Hud::render_debug_info(Camera& c)
     TextRendering_PrintString(window, std::format("Camera position: X: {:.2f} Y: {:.2f} Z: {:.2f}",
                                         cam_pos.x, cam_pos.y, cam_pos.z),
                               HUD_START, HUD_TOP - 7*lineheight);
+
+    TextRendering_PrintString(window, std::format("Cursor position: X: {:.2f} Y: {:.2f}",
+                                        cursor.x, cursor.y),
+                              HUD_START, HUD_TOP - 9*lineheight);
+
+    TextRendering_PrintString(window, std::format("Cursor-Board intersection position: X: {:.2f} Y: {:.2f} Z: {:.2f}",
+                                        cursor_intersection.x, cursor_intersection.y, cursor_intersection.z),
+                              HUD_START, HUD_TOP - 10*lineheight);
 
     TextRendering_PrintString(window, c.is_projection_perspective() ? "Perspective" : "Orthographic",
                               HUD_START, HUD_BOTTOM + 2*lineheight/10);

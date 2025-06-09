@@ -27,6 +27,12 @@ GpuProgram::GpuProgram(const GLchar* const vertex_shader_source,
 void GpuProgram::reload_shaders()
 {
     load_shaders_from_files("../../src/shader_vertex.glsl", "../../src/shader_fragment.glsl");
+
+    glUseProgram(id);
+    for (size_t i = 0; i < texture_uniforms.size(); i++)
+        glUniform1i(glGetUniformLocation(id, texture_uniforms[i].data()), i);
+    glUseProgram(0);
+
     std::cout << "Shaders recarregados!" << std::endl;
 }
 
@@ -204,6 +210,11 @@ void GpuProgram::set_uniform(std::string_view name, int value)
     glUniform1i(get_uniform_location(name), value);
 }
 
+void GpuProgram::set_uniform(std::string_view name, glm::vec2 value)
+{
+    glUniform2fv(get_uniform_location(name), 1, glm::value_ptr(value));
+}
+
 void GpuProgram::set_uniform(std::string_view name, glm::vec4 value)
 {
     glUniform4fv(get_uniform_location(name), 1, glm::value_ptr(value));
@@ -273,6 +284,8 @@ void GpuProgram::load_texture_from_file(std::string_view filename,
     glUseProgram(id);
     glUniform1i(glGetUniformLocation(id, uniform.data()), num_loaded_textures);
     glUseProgram(0);
+
+    texture_uniforms.push_back(uniform);
 
     num_loaded_textures += 1;
 }

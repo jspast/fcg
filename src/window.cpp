@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 
 #include "window.hpp"
+#include "glm/detail/qualifier.hpp"
 
 #define OPENGL_VERSION_MAJOR 3
 #define OPENGL_VERSION_MINOR 3
@@ -70,6 +71,15 @@ void Window::maximize()
 void Window::resize(int w, int h, int x, int y)
 {
     glfwSetWindowMonitor(glfw_window, NULL, x, y, w, h, refresh_rate);
+}
+
+glm::vec2 Window::get_size()
+{
+    glm::vec<2, int> size;
+
+    glfwGetWindowSize(glfw_window, &size.x, &size.y);
+
+    return size;
 }
 
 void Window::toggle_fullscreen()

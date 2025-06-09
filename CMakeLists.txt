@@ -13,6 +13,7 @@ set(SOURCES
   src/object.cpp
   src/chess_game.cpp
   src/gpu.cpp
+  src/collisions.cpp
 )
 
 cmake_minimum_required(VERSION 3.11.0)

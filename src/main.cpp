@@ -15,9 +15,6 @@
 //  vira
 //    #include <cstdio> // Em C++
 //
-#include "chess.hpp"
-#include "chess_game.hpp"
-#include "gpu.hpp"
 
 #define _USE_MATH_DEFINES
 #include <cstdio>
@@ -27,6 +24,7 @@
 #include <new>
 #include <string>
 
+#include "chess_game.hpp"
 #include "object.hpp"
 
 // Headers das bibliotecas OpenGL
@@ -37,6 +35,7 @@
 // Headers da biblioteca GLM: criação de matrizes e vetores.
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
+#include <glm/vec2.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -50,6 +49,11 @@
 #include "window.hpp"
 #include "input.hpp"
 #include "textrendering.hpp"
+#include "collisions.hpp"
+#include "gpu.hpp"
+
+#define SQUARE_SIZE (0.05789 * 1.5)
+#define BOARD_START (-4 * SQUARE_SIZE)
 
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 
@@ -196,6 +200,33 @@ int main()
         delta_t = current_time - prev_time;
         prev_time = current_time;
 
+        glm::vec4 col;
+
+        if (!game_input.get_is_enabled()) {
+            glm::vec4 ray = cursor_to_ray(base_input.get_cursor_position(),
+                                           window->get_size(),
+                                           camera->get_projection_matrix(),
+                                           camera->get_view_matrix());
+
+            col = ray_plane_intersection(camera->get_position(), ray,
+                glm::vec4(0, table_model.aabb.max_y + board_model.aabb.max_y * 1.5f, 0, 1),
+                glm::vec4(0, 1, 0, 0));
+
+            if (col.x > BOARD_START &&
+                col.x < BOARD_START + 8 * SQUARE_SIZE &&
+                col.z > BOARD_START &&
+                col.z < BOARD_START + 8 * SQUARE_SIZE) {
+
+                chess::File file = 8 - (col.x - BOARD_START) / SQUARE_SIZE;
+                chess::Rank rank = (col.z - BOARD_START) / SQUARE_SIZE;
+
+                chess::Square new_square(file, rank);
+
+                chess_game.selecting_square = new_square;
+                board.set_uniform("selecting_square", glm::vec2(file, rank));
+            }
+        }
+
         if (base_input.get_is_key_pressed(GLFW_KEY_F3))
             hud.toggle_debug_info();
 
@@ -312,7 +343,7 @@ int main()
 
         table.draw();
 
-        hud.update(*camera);
+        hud.update(*camera, base_input.get_cursor_position(), col);
 
         // O framebuffer onde OpenGL executa as operações de renderização não
         // é o mesmo que está sendo mostrado para o usuário, caso contrário

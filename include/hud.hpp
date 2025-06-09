@@ -13,7 +13,7 @@ class Hud {
         void toggle_debug_info(bool boolean);
         void toggle_debug_info();
 
-        void update(Camera& camera);
+        void update(Camera& camera, glm::vec2 cursor, glm::vec4 cursor_intersection);
 
     private:
         bool show_debug_info = false;
@@ -28,7 +28,7 @@ class Hud {
         float fps;
         float frametime;
 
-        void render_debug_info(Camera& camera);
+        void render_debug_info(Camera& camera, glm::vec2 cursor, glm::vec4 cursor_intersection);
 
         void update_timings();
 };

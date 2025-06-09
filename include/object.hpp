@@ -51,7 +51,7 @@ class ObjModel {
 
 class Object {
     public:
-        using UniformValue = std::variant<float, int, glm::vec4, glm::mat4>;
+        using UniformValue = std::variant<float, int, glm::vec2, glm::vec4, glm::mat4>;
 
         ObjModel& model;
         glm::mat4 transform = Matrix_Identity();
