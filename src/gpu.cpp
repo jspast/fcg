@@ -266,6 +266,8 @@ void GpuProgram::load_texture_from_file(std::string_view filename,
     glSamplerParameteri(sampler_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glSamplerParameteri(sampler_id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    glSamplerParameterf(sampler_id, GL_TEXTURE_MAX_ANISOTROPY_EXT, 8.0f);
+
     // Agora enviamos a imagem lida do disco para a GPU
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);

@@ -3,7 +3,6 @@
 #include <GLFW/glfw3.h>
 
 #include "window.hpp"
-#include "glm/detail/qualifier.hpp"
 
 #define OPENGL_VERSION_MAJOR 3
 #define OPENGL_VERSION_MINOR 3
@@ -25,7 +24,7 @@ Window::Window(const char* title, int width, int height, bool enable_cursor)
 
     // Use OpenGL core profile, for solely modern functions
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
     glfw_window = glfwCreateWindow(width, height, title, NULL, NULL);
     if (!glfw_window)
