@@ -288,16 +288,16 @@ int main()
             camera->toggle_perspective_projection(false);
 
         if (game_input.get_is_key_down(GLFW_KEY_W))
-            free_camera.move(1.0f * delta_t, 0.0f);
+            free_camera.move(0.5f * delta_t, 0.0f);
 
         if (game_input.get_is_key_down(GLFW_KEY_S))
-            free_camera.move(-1.0f * delta_t, 0.0f);
+            free_camera.move(-0.5f * delta_t, 0.0f);
 
         if (game_input.get_is_key_down(GLFW_KEY_A))
-            free_camera.move(0.0f, 1.0f * delta_t);
+            free_camera.move(0.0f, 0.5f * delta_t);
 
         if (game_input.get_is_key_down(GLFW_KEY_D))
-            free_camera.move(0.0f, -1.0f * delta_t);
+            free_camera.move(0.0f, -0.5f * delta_t);
 
         // Atualizamos parâmetros da câmera com os deslocamentos
         glm::vec2 cursor_movement = game_input.get_cursor_movement();
@@ -305,7 +305,7 @@ int main()
 
         glm::vec2 scroll = game_input.get_scroll_offset();
         camera->adjust_orthographic_zoom(0.1 * scroll.y);
-        lookat_camera.adjust_distance(-0.5 * scroll.y);
+        lookat_camera.adjust_distance(-0.1 * scroll.y);
 
         free_camera.move(-delta_t * game_input.get_gamepad_axis_value(GLFW_JOYSTICK_1,
                                                                       GLFW_GAMEPAD_AXIS_LEFT_Y),
