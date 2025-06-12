@@ -144,8 +144,7 @@ int main()
                                    "BoardRoughness");
     Object board(board_model, gpu_program);
     board.set_uniform("object_id", BOARD);
-    board.set_uniform("selecting_square_row", 0);
-    board.set_uniform("selecting_square_line", 0);
+    board.set_uniform("selecting_square", glm::vec2(0, 0));
     board.set_transform(Matrix_Translate(0.0f, table.model.aabb.max_y, 0.0f) *
                         Matrix_Scale(1.5f, 1.5f, 1.5f));
 
@@ -257,33 +256,28 @@ int main()
 
         if (game_input.get_is_key_pressed(GLFW_KEY_UP)) {
             chess::Square new_square = chess_game.move_selecting_square(chess::Direction::NORTH);
-            if (new_square != chess::Square::NO_SQ) {
-                board.set_uniform("selecting_square_file", new_square.file());
-                board.set_uniform("selecting_square_rank", new_square.rank());
-            }
+            if (new_square != chess::Square::NO_SQ)
+                board.set_uniform("selecting_square", glm::vec2(new_square.file(), new_square.rank()));
         }
 
         if (game_input.get_is_key_pressed(GLFW_KEY_DOWN)) {
             chess::Square new_square = chess_game.move_selecting_square(chess::Direction::SOUTH);
             if (new_square != chess::Square::NO_SQ) {
-                board.set_uniform("selecting_square_file", new_square.file());
-                board.set_uniform("selecting_square_rank", new_square.rank());
+                board.set_uniform("selecting_square", glm::vec2(new_square.file(), new_square.rank()));
             }
         }
 
         if (game_input.get_is_key_pressed(GLFW_KEY_LEFT)) {
             chess::Square new_square = chess_game.move_selecting_square(chess::Direction::WEST);
             if (new_square != chess::Square::NO_SQ) {
-                board.set_uniform("selecting_square_file", new_square.file());
-                board.set_uniform("selecting_square_rank", new_square.rank());
+                board.set_uniform("selecting_square", glm::vec2(new_square.file(), new_square.rank()));
             }
         }
 
         if (game_input.get_is_key_pressed(GLFW_KEY_RIGHT)) {
             chess::Square new_square = chess_game.move_selecting_square(chess::Direction::EAST);
             if (new_square != chess::Square::NO_SQ) {
-                board.set_uniform("selecting_square_file", new_square.file());
-                board.set_uniform("selecting_square_rank", new_square.rank());
+                board.set_uniform("selecting_square", glm::vec2(new_square.file(), new_square.rank()));
             }
         }
 
