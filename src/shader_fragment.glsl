@@ -21,6 +21,7 @@ uniform mat4 projection;
 #define TABLE 2
 uniform int object_id;
 
+// Identificador que define qual a cor do objeto
 #define LIGHT 0
 #define DARK 1
 uniform int object_color;
@@ -34,6 +35,7 @@ uniform int object_color;
 #define CHECK 6
 uniform int square_state;
 
+// Identificadores que definem os estados das casas do tabuleiro
 uniform vec2 selecting_square;
 uniform vec2 selected_square;
 
@@ -56,7 +58,17 @@ uniform sampler2D TableRoughness;
 out vec4 color;
 
 #define SQUARE_SIZE 0.05789
-#define BOARD_START -4 * 0.05789
+#define BOARD_START -4 * SQUARE_SIZE
+
+ivec2 get_current_square()
+{
+    ivec2 square;
+
+    square.x = int(8 - (position_model.x - BOARD_START - SQUARE_SIZE) / SQUARE_SIZE) - 1;
+    square.y = int((position_model.z - BOARD_START + SQUARE_SIZE) / SQUARE_SIZE) - 1;
+
+    return square;
+}
 
 void main()
 {
@@ -134,11 +146,9 @@ void main()
             Ka = 0.01 * texture(BoardAmbient, vec2(U,V)).rgb;
             q = 16.0;
 
-            if (position_model.x >= BOARD_START + (7 - selecting_square.x) * 0.05789 &&
-                position_model.x <= BOARD_START + (8 - selecting_square.x) * 0.05789 &&
-                position_model.z >= BOARD_START + selecting_square.y * 0.05789 &&
-                position_model.z <= BOARD_START + (selecting_square.y + 1) * 0.05789)
+            if (get_current_square() == selecting_square)
                 Kd.g += 0.5;
+
             break;
 
         // Objeto desconhecido = preto
@@ -186,4 +196,4 @@ void main()
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
     color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
-} 
+}
