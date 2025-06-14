@@ -134,9 +134,9 @@ void main()
             norm.w = 0.0;
 
             Kd = texture(TableImage, vec2(U,V)).rgb;
-            Ks = max(vec3(0.0), 0.1 - texture(TableRoughness, vec2(U,V)).rgb);
+            Ks = max(vec3(0.0), 0.2 - texture(TableRoughness, vec2(U,V)).rgb);
             Ka = Kd * texture(TableAmbient, vec2(U,V)).rgb;
-            q = 128.0;
+            q = 16.0;
             break;
 
         // Propriedades espectrais do tabuleiro
@@ -146,12 +146,15 @@ void main()
             norm.w = 0.0;
 
             Kd = texture(BoardImage, vec2(U,V)).rgb;
-            Ks = max(vec3(0.0), 0.2 - 0.5 * texture(BoardRoughness, vec2(U,V)).rgb);
+            Ks = 0.1 - 0.1 * texture(BoardRoughness, vec2(U,V)).rgb;
             Ka = Kd * texture(BoardAmbient, vec2(U,V)).rgb;
             q = 64.0;
 
-            if (get_current_square() == selecting_square)
-                Kd.g += 0.5;
+            if (get_current_square() == selecting_square) {
+                Kd *= 0.1;
+                Kd += 0.1;
+                Kd.g += 0.8;
+            }
 
             break;
 

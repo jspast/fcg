@@ -7,7 +7,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "object.hpp"
-#include "glm/geometric.hpp"
 #include "gpu.hpp"
 
 ObjModel::ObjModel(std::string inputfile, std::string mtl_search_path, bool triangulate)
