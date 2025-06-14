@@ -1,12 +1,13 @@
-#include <algorithm>
 #include <iostream>
 
 #include <glad/gl.h>
 #include <tiny_obj_loader.h>
 #include <glm/mat4x4.hpp>
+#include <glm/vec2.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "object.hpp"
+#include "glm/geometric.hpp"
 #include "gpu.hpp"
 
 ObjModel::ObjModel(std::string inputfile, std::string mtl_search_path, bool triangulate)
@@ -115,6 +116,7 @@ void ObjModel::build_triangles()
     std::vector<float>  model_coefficients;
     std::vector<float>  normal_coefficients;
     std::vector<float>  texture_coefficients;
+    std::vector<float>  tangent_coefficients;
 
     for (size_t shape = 0; shape < shapes.size(); ++shape)
     {
@@ -125,51 +127,87 @@ void ObjModel::build_triangles()
         {
             assert(shapes[shape].mesh.num_face_vertices[triangle] == 3);
 
-            for (size_t vertex = 0; vertex < 3; ++vertex)
+            // Triangle indices
+            tinyobj::index_t idx[3];
+            for (int i = 0; i < 3; i++)
             {
-                tinyobj::index_t idx = shapes[shape].mesh.indices[3*triangle + vertex];
+                idx[i] = shapes[shape].mesh.indices[3*triangle + i];
+                indices.push_back(first_index + 3*triangle + i);
+            }
 
-                indices.push_back(first_index + 3*triangle + vertex);
+            // Vertex positions
+            glm::vec3 pos[3];
+            for (int i = 0; i < 3; i++)
+            {
+                pos[i] = glm::vec3(attrib.vertices[3 * idx[i].vertex_index + 0],
+                                   attrib.vertices[3 * idx[i].vertex_index + 1],
+                                   attrib.vertices[3 * idx[i].vertex_index + 2]);
 
-                const float vx = attrib.vertices[3*idx.vertex_index + 0];
-                const float vy = attrib.vertices[3*idx.vertex_index + 1];
-                const float vz = attrib.vertices[3*idx.vertex_index + 2];
-                //printf("tri %d vert %d = (%.2f, %.2f, %.2f)\n", (int)triangle, (int)vertex, vx, vy, vz);
-                model_coefficients.push_back( vx ); // X
-                model_coefficients.push_back( vy ); // Y
-                model_coefficients.push_back( vz ); // Z
+                model_coefficients.push_back( pos[i].x ); // X
+                model_coefficients.push_back( pos[i].y ); // Y
+                model_coefficients.push_back( pos[i].z ); // Z
                 model_coefficients.push_back( 1.0f ); // W
 
-                aabb.min_x = std::min(aabb.min_x, vx);
-                aabb.min_y = std::min(aabb.min_y, vy);
-                aabb.min_z = std::min(aabb.min_z, vz);
+                aabb.min_x = std::min(aabb.min_x, pos[i].x);
+                aabb.min_y = std::min(aabb.min_y, pos[i].y);
+                aabb.min_z = std::min(aabb.min_z, pos[i].z);
 
-                aabb.max_x = std::max(aabb.max_x, vx);
-                aabb.max_y = std::max(aabb.max_y, vy);
-                aabb.max_z = std::max(aabb.max_z, vz);
+                aabb.max_x = std::max(aabb.max_x, pos[i].x);
+                aabb.max_y = std::max(aabb.max_y, pos[i].y);
+                aabb.max_z = std::max(aabb.max_z, pos[i].z);
+            }
 
-                // Inspecionando o código da tinyobjloader, o aluno Bernardo
-                // Sulzbach (2017/1) apontou que a maneira correta de testar se
-                // existem normais e coordenadas de textura no ObjModel é
-                // comparando se o índice retornado é -1. Fazemos isso abaixo.
-
-                if ( idx.normal_index != -1 )
+            // Vertex normals
+            if ( idx[0].normal_index != -1 )
+            {
+                for (int i = 0; i < 3; i++)
                 {
-                    const float nx = attrib.normals[3*idx.normal_index + 0];
-                    const float ny = attrib.normals[3*idx.normal_index + 1];
-                    const float nz = attrib.normals[3*idx.normal_index + 2];
+                    const float nx = attrib.normals[3*idx[i].normal_index + 0];
+                    const float ny = attrib.normals[3*idx[i].normal_index + 1];
+                    const float nz = attrib.normals[3*idx[i].normal_index + 2];
                     normal_coefficients.push_back( nx ); // X
                     normal_coefficients.push_back( ny ); // Y
                     normal_coefficients.push_back( nz ); // Z
                     normal_coefficients.push_back( 0.0f ); // W
                 }
 
-                if ( idx.texcoord_index != -1 )
+            }
+
+            // Texture coordinates
+            if ( idx[0].texcoord_index != -1 )
+            {
+                glm::vec2 uv[3];
+                for (int i = 0; i < 3; i++)
                 {
-                    const float u = attrib.texcoords[2*idx.texcoord_index + 0];
-                    const float v = attrib.texcoords[2*idx.texcoord_index + 1];
-                    texture_coefficients.push_back( u );
-                    texture_coefficients.push_back( v );
+                    uv[i] = glm::vec2(attrib.texcoords[2 * idx[i].texcoord_index + 0],
+                                      attrib.texcoords[2 * idx[i].texcoord_index + 1]);
+
+                    texture_coefficients.push_back( uv[i].x );
+                    texture_coefficients.push_back( uv[i].y );
+                }
+
+                // Compute edges and UV deltas
+                glm::vec3 edge1 = pos[1] - pos[0];
+                glm::vec3 edge2 = pos[2] - pos[0];
+                glm::vec2 deltaUV1 = uv[1] - uv[0];
+                glm::vec2 deltaUV2 = uv[2] - uv[0];
+
+                // Tangent calculation
+                float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+                glm::vec4 tangent;
+                tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+                tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+                tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+                tangent.w = 0.0f;
+                tangent /= norm(tangent);
+
+                // Store tangent per vertex
+                for (int i = 0; i < 3; ++i) {
+                    tangent_coefficients.push_back(tangent.x);
+                    tangent_coefficients.push_back(tangent.y);
+                    tangent_coefficients.push_back(tangent.z);
+                    tangent_coefficients.push_back(0.0f);
                 }
             }
         }
@@ -209,8 +247,22 @@ void ObjModel::build_triangles()
         glBindBuffer(GL_ARRAY_BUFFER, VBO_texture_coefficients_id);
         glBufferData(GL_ARRAY_BUFFER, texture_coefficients.size() * sizeof(float), NULL, GL_STATIC_DRAW);
         glBufferSubData(GL_ARRAY_BUFFER, 0, texture_coefficients.size() * sizeof(float), texture_coefficients.data());
-        location = 2; // "(location = 1)" em "shader_vertex.glsl"
+        location = 2; // "(location = 2)" em "shader_vertex.glsl"
         number_of_dimensions = 2; // vec2 em "shader_vertex.glsl"
+        glVertexAttribPointer(location, number_of_dimensions, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(location);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+
+    if ( !tangent_coefficients.empty() )
+    {
+        GLuint VBO_tangent_coefficients_id;
+        glGenBuffers(1, &VBO_tangent_coefficients_id);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO_tangent_coefficients_id);
+        glBufferData(GL_ARRAY_BUFFER, tangent_coefficients.size() * sizeof(float), NULL, GL_STATIC_DRAW);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, tangent_coefficients.size() * sizeof(float), tangent_coefficients.data());
+        location = 3; // "(location = 3)" em "shader_vertex.glsl"
+        number_of_dimensions = 4; // vec4 em "shader_vertex.glsl"
         glVertexAttribPointer(location, number_of_dimensions, GL_FLOAT, GL_FALSE, 0, 0);
         glEnableVertexAttribArray(location);
         glBindBuffer(GL_ARRAY_BUFFER, 0);

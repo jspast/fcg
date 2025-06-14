@@ -12,8 +12,8 @@
 #define PIECE 1
 #define TABLE 2
 
-#define LIGHT 0
-#define DARK 1
+#define WHITE 0
+#define BLACK 1
 
 #define NONE 0
 #define SELECTING 1

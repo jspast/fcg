@@ -10,6 +10,8 @@ in vec4 normal;
 // Posição do vértice atual no sistema de coordenadas local do modelo.
 in vec4 position_model;
 
+in mat3 tbn;
+
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
 uniform mat4 view;
@@ -22,9 +24,9 @@ uniform mat4 projection;
 uniform int object_id;
 
 // Identificador que define qual a cor do objeto
-#define LIGHT 0
-#define DARK 1
-uniform int object_color;
+#define WHITE 0
+#define BLACK 1
+uniform int piece_color;
 
 #define NONE 0
 #define SELECTING 1
@@ -46,13 +48,25 @@ uniform vec2 lastmove_end_square;
 in vec2 texcoords;
 
 // Variáveis para acesso das imagens de textura
+uniform sampler2D TableNormal;
+uniform sampler2D TableImage;
+uniform sampler2D TableAmbient;
+uniform sampler2D TableRoughness;
+
+uniform sampler2D BoardNormal;
 uniform sampler2D BoardImage;
 uniform sampler2D BoardAmbient;
 uniform sampler2D BoardRoughness;
 
-uniform sampler2D TableImage;
-uniform sampler2D TableAmbient;
-uniform sampler2D TableRoughness;
+uniform sampler2D WhitePiecesNormal;
+uniform sampler2D WhitePiecesImage;
+uniform sampler2D WhitePiecesAmbient;
+uniform sampler2D WhitePiecesRoughness;
+
+uniform sampler2D BlackPiecesNormal;
+uniform sampler2D BlackPiecesImage;
+uniform sampler2D BlackPiecesAmbient;
+uniform sampler2D BlackPiecesRoughness;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -72,34 +86,7 @@ ivec2 get_current_square()
 
 void main()
 {
-    // Obtemos a posição da câmera utilizando a inversa da matriz que define o
-    // sistema de coordenadas da câmera.
-    vec4 origin = vec4(0.0, 0.0, 0.0, 1.0);
-    vec4 camera_position = inverse(view) * origin;
-
-    // O fragmento atual é coberto por um ponto que percente à superfície de um
-    // dos objetos virtuais da cena. Este ponto, p, possui uma posição no
-    // sistema de coordenadas global (World coordinates). Esta posição é obtida
-    // através da interpolação, feita pelo rasterizador, da posição de cada
-    // vértice.
-    vec4 p = position_world;
-
-    // Normal do fragmento atual, interpolada pelo rasterizador a partir das
-    // normais de cada vértice.
-    vec4 n = normalize(normal);
-
-    vec4 l_pos = vec4(4.0,4.0,4.0,1.0);
-    vec4 l_vec = vec4(0.0,-1.0,0.0,0.0);
-    float a = radians(30.0);
-
-    // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4 l = normalize(l_pos - p);
-
-    // Vetor que define o sentido da câmera em relação ao ponto atual.
-    vec4 v = normalize(camera_position - p);
-
-    // Vetor que define o sentido da reflexão especular ideal.
-    vec4 r = -l + 2.0 * n * dot(n, l); // Vetor de reflexão especular ideal
+    vec4 norm = normal;
 
     // Parâmetros que definem as propriedades espectrais da superfície
     vec3 Kd; // Refletância difusa
@@ -114,18 +101,27 @@ void main()
     switch (object_id) {
         // Propriedades espectrais das peças
         case PIECE:
-            switch (object_color) {
-                case LIGHT:
-                    Kd = vec3(0.9,0.8,0.7);
-                    Ks = vec3(0.0,0.0,0.0);
-                    Ka = vec3(0.6,0.5,0.4);
-                    q = 1.0;
+            switch (piece_color) {
+                case WHITE:
+                    norm = texture(WhitePiecesNormal, vec2(U,V)) * 2.0 - 0.5;
+                    norm.xyz = normalize(tbn * norm.xyz);
+                    norm.w = 0.0;
+
+                    Kd = texture(WhitePiecesImage, vec2(U,V)).rgb;
+                    Ks = max(vec3(0.0), 0.2 - 0.5 * texture(WhitePiecesRoughness, vec2(U,V)).rgb);
+                    Ka = Kd * texture(WhitePiecesAmbient, vec2(U,V)).rgb;
+                    q = 32.0;
+                    break;
                     break;
 
-                case DARK:
-                    Kd = vec3(0.2,0.2,0.2);
-                    Ks = vec3(0.5,0.5,0.5);
-                    Ka = vec3(0.2,0.2,0.2);
+                case BLACK:
+                    norm = texture(BlackPiecesNormal, vec2(U,V)) * 2.0 - 0.5;
+                    norm.xyz = normalize(tbn * norm.xyz);
+                    norm.w = 0.0;
+
+                    Kd = texture(BlackPiecesImage, vec2(U,V)).rgb;
+                    Ks = max(vec3(0.0), 0.2 - 0.5 * texture(BlackPiecesRoughness, vec2(U,V)).rgb);
+                    Ka = Kd * texture(BlackPiecesAmbient, vec2(U,V)).rgb;
                     q = 32.0;
                     break;
             }
@@ -133,18 +129,26 @@ void main()
 
         // Propriedades espectrais da mesa
         case TABLE:
+            norm = texture(TableNormal, vec2(U,V)) * 2.0 - 0.5;
+            norm.xyz = normalize(tbn * norm.xyz);
+            norm.w = 0.0;
+
             Kd = texture(TableImage, vec2(U,V)).rgb;
-            Ks = 0.1 - texture(TableRoughness, vec2(U,V)).rgb;
-            Ka = 0.01 * texture(TableAmbient, vec2(U,V)).rgb;
-            q = 64.0;
+            Ks = max(vec3(0.0), 0.1 - texture(TableRoughness, vec2(U,V)).rgb);
+            Ka = Kd * texture(TableAmbient, vec2(U,V)).rgb;
+            q = 128.0;
             break;
 
         // Propriedades espectrais do tabuleiro
         case BOARD:
+            norm = texture(BoardNormal, vec2(U,V)) * 2.0 - 0.5;
+            norm.xyz = normalize(tbn * norm.xyz);
+            norm.w = 0.0;
+
             Kd = texture(BoardImage, vec2(U,V)).rgb;
-            Ks = 0.3 - texture(BoardRoughness, vec2(U,V)).rgb;
-            Ka = 0.01 * texture(BoardAmbient, vec2(U,V)).rgb;
-            q = 16.0;
+            Ks = max(vec3(0.0), 0.2 - 0.5 * texture(BoardRoughness, vec2(U,V)).rgb);
+            Ka = Kd * texture(BoardAmbient, vec2(U,V)).rgb;
+            q = 64.0;
 
             if (get_current_square() == selecting_square)
                 Kd.g += 0.5;
@@ -159,6 +163,35 @@ void main()
             q = 1.0;
             break;
     }
+
+    // Obtemos a posição da câmera utilizando a inversa da matriz que define o
+    // sistema de coordenadas da câmera.
+    vec4 origin = vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 camera_position = inverse(view) * origin;
+
+    // O fragmento atual é coberto por um ponto que percente à superfície de um
+    // dos objetos virtuais da cena. Este ponto, p, possui uma posição no
+    // sistema de coordenadas global (World coordinates). Esta posição é obtida
+    // através da interpolação, feita pelo rasterizador, da posição de cada
+    // vértice.
+    vec4 p = position_world;
+
+    // Normal do fragmento atual, interpolada pelo rasterizador a partir das
+    // normais de cada vértice.
+    vec4 n = normalize(norm);
+
+    vec4 l_pos = vec4(4.0,4.0,4.0,1.0);
+    vec4 l_vec = vec4(0.0,-1.0,0.0,0.0);
+    float a = radians(30.0);
+
+    // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
+    vec4 l = normalize(l_pos - p);
+
+    // Vetor que define o sentido da câmera em relação ao ponto atual.
+    vec4 v = normalize(camera_position - p);
+
+    // Vetor que define o sentido da reflexão especular ideal.
+    vec4 r = -l + 2.0 * n * dot(n, l); // Vetor de reflexão especular ideal
 
     // Espectro da fonte de iluminação
     vec3 I = vec3(1.0,1.0,1.0); // Espectro da fonte de luz

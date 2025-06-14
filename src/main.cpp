@@ -52,8 +52,10 @@
 #include "collisions.hpp"
 #include "gpu.hpp"
 
-#define SQUARE_SIZE (0.05789 * 1.5)
+#define SQUARE_SIZE (0.05789)
 #define BOARD_START (-4 * SQUARE_SIZE)
+#define G_SQUARE_SIZE (SQUARE_SIZE * 1.5)
+#define G_BOARD_START (-4 * G_SQUARE_SIZE)
 
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 
@@ -75,6 +77,9 @@ int main()
         std::exit(EXIT_FAILURE);
 
     Window *window = new Window("INF01047 - Trabalho Final");
+
+    // Desabilita limite de quadros
+    // glfwSwapInterval(0);
 
     // Definimos a função de callback que será chamada sempre que a janela for
     // redimensionada, por consequência alterando o tamanho do "framebuffer"
@@ -123,25 +128,21 @@ int main()
 
     print_system_info();
 
-    ObjModel table_model("../../data/models/table/table.obj");
+    ObjModel table_model("../../data/models/table.obj");
     table_model.build_triangles();
-    gpu_program.load_texture_from_file("../../data/models/table/" + table_model.materials[0].diffuse_texname,
-                                       "TableImage");
-    gpu_program.load_texture_from_file("../../data/models/table/" + table_model.materials[0].ambient_texname,
-                                       "TableAmbient");
-    gpu_program.load_texture_from_file("../../data/models/table/" + table_model.materials[0].roughness_texname,
-                                       "TableRoughness");
+    gpu_program.load_texture_from_file("../../data/textures/table/diffuse.jpg", "TableImage");
+    gpu_program.load_texture_from_file("../../data/textures/table/ambient.jpg", "TableAmbient");
+    gpu_program.load_texture_from_file("../../data/textures/table/roughness.jpg", "TableRoughness");
+    gpu_program.load_texture_from_file("../../data/textures/table/normal.jpg", "TableNormal");
     Object table(table_model, gpu_program);
     table.set_uniform("object_id", TABLE);
 
-    ObjModel board_model("../../data/models/board/board.obj");
+    ObjModel board_model("../../data/models/board.obj");
     board_model.build_triangles();
-    gpu_program.load_texture_from_file("../../data/models/board/" + board_model.materials[0].diffuse_texname,
-                                   "BoardImage");
-    gpu_program.load_texture_from_file("../../data/models/board/" + board_model.materials[0].ambient_texname,
-                                   "BoardAmbient");
-    gpu_program.load_texture_from_file("../../data/models/board/" + board_model.materials[0].roughness_texname,
-                                   "BoardRoughness");
+    gpu_program.load_texture_from_file("../../data/textures/board/diffuse.jpg", "BoardImage");
+    gpu_program.load_texture_from_file("../../data/textures/board/ambient.jpg", "BoardAmbient");
+    gpu_program.load_texture_from_file("../../data/textures/board/roughness.jpg", "BoardRoughness");
+    gpu_program.load_texture_from_file("../../data/textures/board/normal.jpg", "BoardNormal");
     Object board(board_model, gpu_program);
     board.set_uniform("object_id", BOARD);
     board.set_uniform("selecting_square", glm::vec2(0, 0));
@@ -149,6 +150,32 @@ int main()
                         Matrix_Scale(1.5f, 1.5f, 1.5f));
 
     table.children.push_back(&board);
+
+    ObjModel pawn_model("../../data/models/pawn.obj");
+    pawn_model.build_triangles();
+    gpu_program.load_texture_from_file("../../data/textures/black_pieces/diffuse.jpg", "BlackPiecesImage");
+    gpu_program.load_texture_from_file("../../data/textures/black_pieces/ambient.jpg", "BlackPiecesAmbient");
+    gpu_program.load_texture_from_file("../../data/textures/black_pieces/roughness.jpg", "BlackPiecesRoughness");
+    gpu_program.load_texture_from_file("../../data/textures/black_pieces/normal.jpg", "BlackPiecesNormal");
+    Object pawn(pawn_model, gpu_program);
+    pawn.set_uniform("object_id", PIECE);
+    pawn.set_uniform("piece_color", BLACK);
+    pawn.set_transform(Matrix_Translate(BOARD_START + SQUARE_SIZE / 2.0, 0.0f, BOARD_START + SQUARE_SIZE / 2.0));
+
+    board.children.push_back(&pawn);
+
+    ObjModel king_model("../../data/models/king.obj");
+    king_model.build_triangles();
+    gpu_program.load_texture_from_file("../../data/textures/white_pieces/diffuse.jpg", "WhitePiecesImage");
+    gpu_program.load_texture_from_file("../../data/textures/white_pieces/ambient.jpg", "WhitePiecesAmbient");
+    gpu_program.load_texture_from_file("../../data/textures/white_pieces/roughness.jpg", "WhitePiecesRoughness");
+    gpu_program.load_texture_from_file("../../data/textures/white_pieces/normal.jpg", "WhitePiecesNormal");
+    Object king(king_model, gpu_program);
+    king.set_uniform("object_id", PIECE);
+    king.set_uniform("piece_color", WHITE);
+    king.set_transform(Matrix_Translate(-BOARD_START - SQUARE_SIZE / 2.0, 0.0f, -BOARD_START - SQUARE_SIZE / 2.0));
+
+    board.children.push_back(&king);
 
     // Inicializamos o código para renderização de texto.
     TextRendering_Init();
@@ -211,13 +238,13 @@ int main()
                 glm::vec4(0, table_model.aabb.max_y + board_model.aabb.max_y * 1.5f, 0, 1),
                 glm::vec4(0, 1, 0, 0));
 
-            if (col.x > BOARD_START &&
-                col.x < BOARD_START + 8 * SQUARE_SIZE &&
-                col.z > BOARD_START &&
-                col.z < BOARD_START + 8 * SQUARE_SIZE) {
+            if (col.x > G_BOARD_START &&
+                col.x < G_BOARD_START + 8 * G_SQUARE_SIZE &&
+                col.z > G_BOARD_START &&
+                col.z < G_BOARD_START + 8 * G_SQUARE_SIZE) {
 
-                chess::File file = 8 - (col.x - BOARD_START) / SQUARE_SIZE;
-                chess::Rank rank = (col.z - BOARD_START) / SQUARE_SIZE;
+                chess::File file = 8 - (col.x - G_BOARD_START) / G_SQUARE_SIZE;
+                chess::Rank rank = (col.z - G_BOARD_START) / G_SQUARE_SIZE;
 
                 chess::Square new_square(file, rank);
 

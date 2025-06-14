@@ -4,6 +4,7 @@
 layout (location = 0) in vec4 model_coefficients;
 layout (location = 1) in vec4 normal_coefficients;
 layout (location = 2) in vec2 texture_coefficients;
+layout (location = 3) in vec4 tangent_coefficients;
 
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
@@ -18,6 +19,7 @@ out vec4 position_world;
 out vec4 position_model;
 out vec4 normal;
 out vec2 texcoords;
+out mat3 tbn;
 
 void main()
 {
@@ -62,5 +64,14 @@ void main()
 
     // Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
     texcoords = texture_coefficients;
+
+    // Matriz TBN
+    vec3 bitangent = cross(normal.xyz, tangent_coefficients.xyz);
+
+    vec3 t = normalize(vec3(model * tangent_coefficients));
+    vec3 b = normalize(vec3(model * vec4(bitangent, 0.0)));
+    vec3 n = normalize(vec3(model * normal));
+
+    tbn = mat3(t, b, n);
 }
 
