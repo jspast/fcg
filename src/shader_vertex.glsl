@@ -66,11 +66,12 @@ void main()
     texcoords = texture_coefficients;
 
     // Matriz TBN
-    vec3 bitangent = cross(normal.xyz, tangent_coefficients.xyz);
-
     vec3 t = normalize(vec3(model * tangent_coefficients));
-    vec3 b = normalize(vec3(model * vec4(bitangent, 0.0)));
     vec3 n = normalize(vec3(model * normal));
+
+    t = normalize(t - dot(t, n) * n);
+
+    vec3 b = cross(n, t);
 
     tbn = mat3(t, b, n);
 }
