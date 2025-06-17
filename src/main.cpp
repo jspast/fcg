@@ -128,6 +128,11 @@ int main()
 
     print_system_info();
 
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glfwSwapBuffers(window->glfw_window);
+    glfwPollEvents();
+
     ObjModel table_model("../../data/models/table.obj");
     table_model.build_triangles();
     gpu_program.load_texture_from_file("../../data/textures/table/diffuse.jpg", "TableImage");
@@ -136,6 +141,8 @@ int main()
     gpu_program.load_texture_from_file("../../data/textures/table/normal.jpg", "TableNormal");
     Object table(table_model, gpu_program);
     table.set_uniform("object_id", TABLE);
+
+    glfwPollEvents();
 
     ObjModel board_model("../../data/models/board.obj");
     board_model.build_triangles();
@@ -151,6 +158,8 @@ int main()
 
     table.add_child(&board);
 
+    glfwPollEvents();
+
     ObjModel pawn_model("../../data/models/pawn.obj");
     pawn_model.build_triangles();
     gpu_program.load_texture_from_file("../../data/textures/black_pieces/diffuse.jpg", "BlackPiecesImage");
@@ -165,6 +174,8 @@ int main()
 
     board.add_child(&pawn);
 
+    glfwPollEvents();
+
     ObjModel king_model("../../data/models/king.obj");
     king_model.build_triangles();
     gpu_program.load_texture_from_file("../../data/textures/white_pieces/diffuse.jpg", "WhitePiecesImage");
@@ -177,6 +188,8 @@ int main()
     king.set_transform(Matrix_Translate(-BOARD_START - SQUARE_SIZE / 2.0, 0.0f, -BOARD_START - SQUARE_SIZE / 2.0));
 
     board.add_child(&king);
+
+    glfwPollEvents();
 
     // Inicializamos o código para renderização de texto.
     TextRendering_Init();
