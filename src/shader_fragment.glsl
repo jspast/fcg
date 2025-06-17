@@ -136,7 +136,7 @@ void main()
             norm.w = 0.0;
 
             Kd = texture(TableImage, vec2(U,V)).rgb;
-            Ks = max(vec3(0.0), 0.2 - texture(TableRoughness, vec2(U,V)).rgb);
+            Ks = max(vec3(0.0), 0.2 - 1.5 * texture(TableRoughness, vec2(U,V)).rgb);
             Ka = Kd * texture(TableAmbient, vec2(U,V)).rgb;
             q = 16.0;
             break;

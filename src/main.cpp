@@ -135,10 +135,10 @@ int main()
 
     ObjModel table_model("../../data/models/table.obj");
     table_model.build_triangles();
-    gpu_program.load_texture_from_file("../../data/textures/table/diffuse.jpg", "TableImage");
-    gpu_program.load_texture_from_file("../../data/textures/table/ambient.jpg", "TableAmbient");
-    gpu_program.load_texture_from_file("../../data/textures/table/roughness.jpg", "TableRoughness");
-    gpu_program.load_texture_from_file("../../data/textures/table/normal.jpg", "TableNormal");
+    gpu_program.load_texture_from_file("../../data/textures/table/diffuse_high.jpg", "TableImage");
+    gpu_program.load_texture_from_file("../../data/textures/table/ambient_low.jpg", "TableAmbient");
+    gpu_program.load_texture_from_file("../../data/textures/table/roughness_high.jpg", "TableRoughness");
+    gpu_program.load_texture_from_file("../../data/textures/table/normal_high.jpg", "TableNormal");
     Object table(table_model, gpu_program);
     table.set_uniform("object_id", TABLE);
 
@@ -146,10 +146,10 @@ int main()
 
     ObjModel board_model("../../data/models/board.obj");
     board_model.build_triangles();
-    gpu_program.load_texture_from_file("../../data/textures/board/diffuse.jpg", "BoardImage");
-    gpu_program.load_texture_from_file("../../data/textures/board/ambient.jpg", "BoardAmbient");
-    gpu_program.load_texture_from_file("../../data/textures/board/roughness.jpg", "BoardRoughness");
-    gpu_program.load_texture_from_file("../../data/textures/board/normal.jpg", "BoardNormal");
+    gpu_program.load_texture_from_file("../../data/textures/board/diffuse_high.jpg", "BoardImage");
+    gpu_program.load_texture_from_file("../../data/textures/board/ambient_low.jpg", "BoardAmbient");
+    gpu_program.load_texture_from_file("../../data/textures/board/roughness_low.jpg", "BoardRoughness");
+    gpu_program.load_texture_from_file("../../data/textures/board/normal_high.jpg", "BoardNormal");
     Object board(board_model, gpu_program);
     board.set_uniform("object_id", BOARD);
     board.set_uniform("selecting_square", glm::vec2(0, 0));
@@ -162,10 +162,10 @@ int main()
 
     ObjModel pawn_model("../../data/models/pawn.obj");
     pawn_model.build_triangles();
-    gpu_program.load_texture_from_file("../../data/textures/black_pieces/diffuse.jpg", "BlackPiecesImage");
-    gpu_program.load_texture_from_file("../../data/textures/black_pieces/ambient.jpg", "BlackPiecesAmbient");
-    gpu_program.load_texture_from_file("../../data/textures/black_pieces/roughness.jpg", "BlackPiecesRoughness");
-    gpu_program.load_texture_from_file("../../data/textures/black_pieces/normal.jpg", "BlackPiecesNormal");
+    gpu_program.load_texture_from_file("../../data/textures/black_pieces/diffuse_high.jpg", "BlackPiecesImage");
+    gpu_program.load_texture_from_file("../../data/textures/black_pieces/ambient_low.jpg", "BlackPiecesAmbient");
+    gpu_program.load_texture_from_file("../../data/textures/black_pieces/roughness_low.jpg", "BlackPiecesRoughness");
+    gpu_program.load_texture_from_file("../../data/textures/black_pieces/normal_low.jpg", "BlackPiecesNormal");
     Object pawn(pawn_model, gpu_program);
     pawn.set_uniform("object_id", PIECE);
     pawn.set_uniform("piece_color", BLACK);
@@ -178,10 +178,10 @@ int main()
 
     ObjModel king_model("../../data/models/king.obj");
     king_model.build_triangles();
-    gpu_program.load_texture_from_file("../../data/textures/white_pieces/diffuse.jpg", "WhitePiecesImage");
-    gpu_program.load_texture_from_file("../../data/textures/white_pieces/ambient.jpg", "WhitePiecesAmbient");
-    gpu_program.load_texture_from_file("../../data/textures/white_pieces/roughness.jpg", "WhitePiecesRoughness");
-    gpu_program.load_texture_from_file("../../data/textures/white_pieces/normal.jpg", "WhitePiecesNormal");
+    gpu_program.load_texture_from_file("../../data/textures/white_pieces/diffuse_high.jpg", "WhitePiecesImage");
+    gpu_program.load_texture_from_file("../../data/textures/white_pieces/ambient_low.jpg", "WhitePiecesAmbient");
+    gpu_program.load_texture_from_file("../../data/textures/white_pieces/roughness_low.jpg", "WhitePiecesRoughness");
+    gpu_program.load_texture_from_file("../../data/textures/white_pieces/normal_low.jpg", "WhitePiecesNormal");
     Object king(king_model, gpu_program);
     king.set_uniform("object_id", PIECE);
     king.set_uniform("piece_color", WHITE);
