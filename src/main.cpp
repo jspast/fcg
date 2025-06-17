@@ -149,7 +149,7 @@ int main()
     board.set_transform(Matrix_Translate(0.0f, table.model.aabb.max_y, 0.0f) *
                         Matrix_Scale(1.5f, 1.5f, 1.5f));
 
-    table.children.push_back(&board);
+    table.add_child(&board);
 
     ObjModel pawn_model("../../data/models/pawn.obj");
     pawn_model.build_triangles();
@@ -160,9 +160,10 @@ int main()
     Object pawn(pawn_model, gpu_program);
     pawn.set_uniform("object_id", PIECE);
     pawn.set_uniform("piece_color", BLACK);
+    pawn.set_instances(8);
     pawn.set_transform(Matrix_Translate(BOARD_START + SQUARE_SIZE / 2.0, 0.0f, BOARD_START + SQUARE_SIZE / 2.0));
 
-    board.children.push_back(&pawn);
+    board.add_child(&pawn);
 
     ObjModel king_model("../../data/models/king.obj");
     king_model.build_triangles();
@@ -175,7 +176,7 @@ int main()
     king.set_uniform("piece_color", WHITE);
     king.set_transform(Matrix_Translate(-BOARD_START - SQUARE_SIZE / 2.0, 0.0f, -BOARD_START - SQUARE_SIZE / 2.0));
 
-    board.children.push_back(&king);
+    board.add_child(&king);
 
     // Inicializamos o código para renderização de texto.
     TextRendering_Init();

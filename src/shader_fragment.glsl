@@ -12,6 +12,8 @@ in vec4 position_model;
 
 in mat3 tbn;
 
+flat in int instanceID;
+
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
 uniform mat4 view;

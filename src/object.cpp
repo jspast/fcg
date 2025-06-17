@@ -282,30 +282,17 @@ void ObjModel::build_triangles()
     glBindVertexArray(0);
 }
 
-void ObjModel::draw()
+void ObjModel::draw(size_t num_instances)
 {
-    // "Ligamos" o VAO. Informamos que queremos utilizar os atributos de
-    // vértices apontados pelo VAO criado pela função BuildTrianglesAndAddToVirtualScene(). Veja
-    // comentários detalhados dentro da definição de BuildTrianglesAndAddToVirtualScene().
     glBindVertexArray(vao_id);
 
-    // Pedimos para a GPU rasterizar os vértices dos eixos XYZ
-    // apontados pelo VAO como linhas. Veja a definição de
-    // g_VirtualScene[""] dentro da função BuildTrianglesAndAddToVirtualScene(), e veja
-    // a documentação da função glDrawElements() em
-    // http://docs.gl/gl3/glDrawElements.
-    glDrawElements(
-        GL_TRIANGLES,
-        num_indices,
-        GL_UNSIGNED_INT,
-        (void*)(0)
-    );
+    if (num_instances == 1)
+        glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_INT, 0);
+    else
+        glDrawElementsInstanced(GL_TRIANGLES, num_indices, GL_UNSIGNED_INT, 0, num_instances);
 
-    // "Desligamos" o VAO, evitando assim que operações posteriores venham a
-    // alterar o mesmo. Isso evita bugs.
     glBindVertexArray(0);
 }
-
 
 // Função para debugging: imprime no terminal todas informações de um modelo
 // geométrico carregado de um arquivo ".obj".
@@ -483,11 +470,21 @@ void Object::draw(const glm::mat4 parent_transform)
     // Always set model matrix
     gpu_program.set_uniform("model", t);
 
-    model.draw();
+    model.draw(num_instances);
 
     for (Object* child : children) {
         child->draw(t);
     }
+}
+
+void Object::add_child(Object* child)
+{
+    children.push_back(child);
+}
+
+void Object::set_instances(size_t n)
+{
+    num_instances = n;
 }
 
 void Object::set_transform(glm::mat4 t)

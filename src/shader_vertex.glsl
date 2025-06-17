@@ -21,8 +21,29 @@ out vec4 normal;
 out vec2 texcoords;
 out mat3 tbn;
 
+// Variável utilizada para encaminharmos a informação de gl_InstanceID para o
+// fragment shader, caso necessário.
+flat out int instanceID;
+
+#define SQUARE_SIZE 0.05789 * 1.5f
+#define BOARD_START -4 * SQUARE_SIZE
+
 void main()
 {
+    // Computamos o deslocamento em X da instância atual de acordo com seu ID
+    float dx = gl_InstanceID * SQUARE_SIZE;
+    mat4 translation_matrix = mat4(
+        1.0, 0.0, 0.0, 0.0, // 1a coluna
+        0.0, 1.0, 0.0, 0.0, // 2a coluna
+        0.0, 0.0, 1.0, 0.0, // 3a coluna
+        dx , 0.0, 0.0, 1.0  // 4a coluna
+    );
+
+    mat4 updated_model_matrix = translation_matrix * model;
+
+    // Encaminhamos a informação de gl_InstanceID para o fragment shader, caso necessário.
+    instanceID = gl_InstanceID;
+
     // A variável gl_Position define a posição final de cada vértice
     // OBRIGATORIAMENTE em "normalized device coordinates" (NDC), onde cada
     // coeficiente estará entre -1 e 1 após divisão por w.
@@ -35,7 +56,7 @@ void main()
     // deste Vertex Shader, a placa de vídeo (GPU) fará a divisão por W. Veja
     // slides 41-67 e 69-86 do documento Aula_09_Projecoes.pdf.
 
-    gl_Position = projection * view * model * model_coefficients;
+    gl_Position = projection * view * updated_model_matrix * model_coefficients;
 
     // Como as variáveis acima  (tipo vec4) são vetores com 4 coeficientes,
     // também é possível acessar e modificar cada coeficiente de maneira
@@ -52,7 +73,7 @@ void main()
     // rasterizador para gerar atributos únicos para cada fragmento gerado.
 
     // Posição do vértice atual no sistema de coordenadas global (World).
-    position_world = model * model_coefficients;
+    position_world = updated_model_matrix * model_coefficients;
 
     // Posição do vértice atual no sistema de coordenadas local do modelo.
     position_model = model_coefficients;
@@ -66,8 +87,8 @@ void main()
     texcoords = texture_coefficients;
 
     // Matriz TBN
-    vec3 t = normalize(vec3(model * tangent_coefficients));
-    vec3 n = normalize(vec3(model * normal));
+    vec3 t = normalize(vec3(updated_model_matrix * tangent_coefficients));
+    vec3 n = normalize(vec3(updated_model_matrix * normal));
 
     t = normalize(t - dot(t, n) * n);
 
