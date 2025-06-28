@@ -36,7 +36,7 @@ class Camera {
 
         // Used to define the frustum
         float nearplane_distance = 0.01f;
-        float farplane_distance  = 10.0f;
+        float farplane_distance  = 100.0f;
 
         // Perspective projection is used by default
         bool use_perspective_projection = true;

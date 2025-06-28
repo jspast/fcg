@@ -20,6 +20,7 @@ out vec4 position_model;
 out vec4 normal;
 out vec2 texcoords;
 out mat3 tbn;
+out vec3 texcoords_skybox;
 
 // Variável utilizada para encaminharmos a informação de gl_InstanceID para o
 // fragment shader, caso necessário.
@@ -95,5 +96,9 @@ void main()
     vec3 b = cross(n, t);
 
     tbn = mat3(t, b, n);
+
+    vec4 origin = vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 camera_position = inverse(view) * origin;
+    texcoords_skybox = (position_world - camera_position).xyz;
 }
 

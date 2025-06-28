@@ -133,6 +133,29 @@ int main()
     glfwSwapBuffers(window->glfw_window);
     glfwPollEvents();
 
+    ObjModel sky_model("../../data/models/cube.obj");
+    sky_model.build_triangles();
+    gpu_program.load_cubemap_from_hdr_files({"../../data/textures/sky/px.hdr",
+                                             "../../data/textures/sky/nx.hdr",
+                                             "../../data/textures/sky/py.hdr",
+                                             "../../data/textures/sky/ny.hdr",
+                                             "../../data/textures/sky/pz.hdr",
+                                             "../../data/textures/sky/nz.hdr"},
+                                            "SkyImage");
+    Object sky(sky_model, gpu_program);
+    sky.set_uniform("object_id", SKY);
+
+    ObjModel floor_model("../../data/models/plane.obj");
+    floor_model.compute_normals();
+    floor_model.build_triangles();
+    gpu_program.load_texture_from_file("../../data/textures/floor/diffuse_high.jpg", "FloorImage");
+    gpu_program.load_texture_from_file("../../data/textures/floor/ambient_high.jpg", "FloorAmbient");
+    gpu_program.load_texture_from_file("../../data/textures/floor/roughness_high.jpg", "FloorRoughness");
+    gpu_program.load_texture_from_file("../../data/textures/floor/normal_high.jpg", "FloorNormal");
+    Object floor(floor_model, gpu_program);
+    floor.set_uniform("object_id", FLOOR);
+    floor.set_transform(Matrix_Scale(100.0f, 1.0f, 100.0f));
+
     ObjModel table_model("../../data/models/table.obj");
     table_model.build_triangles();
     gpu_program.load_texture_from_file("../../data/textures/table/diffuse_high.jpg", "TableImage");
@@ -375,6 +398,15 @@ int main()
         // efetivamente aplicadas em todos os pontos.
         glUniformMatrix4fv(view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
+
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+        sky.set_transform(Matrix_Translate(camera->get_position().x - 0.5, camera->get_position().y - 0.5, camera->get_position().z - 0.5));
+        sky.draw();
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+
+        floor.draw();
 
         table.draw();
 

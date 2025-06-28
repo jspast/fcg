@@ -12,6 +12,8 @@ in vec4 position_model;
 
 in mat3 tbn;
 
+in vec3 texcoords_skybox;
+
 flat in int instanceID;
 
 // Matrizes computadas no código C++ e enviadas para a GPU
@@ -23,6 +25,8 @@ uniform mat4 projection;
 #define BOARD 0
 #define PIECE 1
 #define TABLE 2
+#define SKY 3
+#define FLOOR 4
 uniform int object_id;
 
 // Identificador que define qual a cor do objeto
@@ -50,6 +54,13 @@ uniform vec2 lastmove_end_square;
 in vec2 texcoords;
 
 // Variáveis para acesso das imagens de textura
+uniform samplerCube SkyImage;
+
+uniform sampler2D FloorNormal;
+uniform sampler2D FloorImage;
+uniform sampler2D FloorAmbient;
+uniform sampler2D FloorRoughness;
+
 uniform sampler2D TableNormal;
 uniform sampler2D TableImage;
 uniform sampler2D TableAmbient;
@@ -89,6 +100,23 @@ ivec2 get_current_square()
 void main()
 {
     vec4 norm = normal;
+
+    // Obtemos a posição da câmera utilizando a inversa da matriz que define o
+    // sistema de coordenadas da câmera.
+    vec4 origin = vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 camera_position = inverse(view) * origin;
+
+    // O fragmento atual é coberto por um ponto que percente à superfície de um
+    // dos objetos virtuais da cena. Este ponto, p, possui uma posição no
+    // sistema de coordenadas global (World coordinates). Esta posição é obtida
+    // através da interpolação, feita pelo rasterizador, da posição de cada
+    // vértice.
+    vec4 p = position_world;
+
+    // Vetor que define o sentido da câmera em relação ao ponto atual.
+    vec4 v = normalize(camera_position - p);
+
+    vec3 R;
 
     // Parâmetros que definem as propriedades espectrais da superfície
     vec3 Kd; // Refletância difusa
@@ -137,6 +165,9 @@ void main()
 
             Kd = texture(TableImage, vec2(U,V)).rgb;
             Ks = max(vec3(0.0), 0.2 - 1.5 * texture(TableRoughness, vec2(U,V)).rgb);
+            // Vetor de reflexão
+            R = reflect(-v.xyz, norm.xyz);
+            Ks *= 0.5 * texture(SkyImage, R).rgb;
             Ka = Kd * texture(TableAmbient, vec2(U,V)).rgb;
             q = 16.0;
             break;
@@ -149,6 +180,9 @@ void main()
 
             Kd = texture(BoardImage, vec2(U,V)).rgb;
             Ks = 0.1 - 0.1 * texture(BoardRoughness, vec2(U,V)).rgb;
+            // Vetor de reflexão
+            R = reflect(-v.xyz, norm.xyz);
+            Ks *= 0.5 * texture(SkyImage, R).rgb;
             Ka = Kd * texture(BoardAmbient, vec2(U,V)).rgb;
             q = 64.0;
 
@@ -160,6 +194,22 @@ void main()
 
             break;
 
+        case SKY:
+            color.rgb = texture(SkyImage, texcoords_skybox).rgb;
+            color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/3.5);
+            return;
+
+        case FLOOR:
+            norm = texture(FloorNormal, 50 * vec2(U,V)) * 2.0 - 0.5;
+            norm.xyz = normalize(tbn * norm.xyz);
+            norm.w = 0.0;
+
+            Kd = texture(FloorImage, 50 * vec2(U,V)).rgb;
+            Ks = vec3(0.0);
+            Ka = Kd * 1.0 * texture(FloorAmbient, 50 * vec2(U,V)).rgb;
+            q = 1.0;
+            break;
+
         // Objeto desconhecido = preto
         default:
             Kd = vec3(0.0,0.0,0.0);
@@ -169,31 +219,16 @@ void main()
             break;
     }
 
-    // Obtemos a posição da câmera utilizando a inversa da matriz que define o
-    // sistema de coordenadas da câmera.
-    vec4 origin = vec4(0.0, 0.0, 0.0, 1.0);
-    vec4 camera_position = inverse(view) * origin;
-
-    // O fragmento atual é coberto por um ponto que percente à superfície de um
-    // dos objetos virtuais da cena. Este ponto, p, possui uma posição no
-    // sistema de coordenadas global (World coordinates). Esta posição é obtida
-    // através da interpolação, feita pelo rasterizador, da posição de cada
-    // vértice.
-    vec4 p = position_world;
-
     // Normal do fragmento atual, interpolada pelo rasterizador a partir das
     // normais de cada vértice.
     vec4 n = normalize(norm);
 
-    vec4 l_pos = vec4(4.0,4.0,4.0,1.0);
+    vec4 l_pos = vec4(40.0,100.0,80.0,1.0);
     vec4 l_vec = vec4(0.0,-1.0,0.0,0.0);
     float a = radians(30.0);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
     vec4 l = normalize(l_pos - p);
-
-    // Vetor que define o sentido da câmera em relação ao ponto atual.
-    vec4 v = normalize(camera_position - p);
 
     // Vetor que define o sentido da reflexão especular ideal.
     vec4 r = -l + 2.0 * n * dot(n, l); // Vetor de reflexão especular ideal

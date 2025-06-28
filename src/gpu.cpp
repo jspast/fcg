@@ -230,6 +230,55 @@ GLint GpuProgram::get_uniform_location(std::string_view name)
     return glGetUniformLocation(id, name.data());
 }
 
+void GpuProgram::load_cubemap_from_hdr_files(std::vector<std::string_view> filename,
+                                             std::string_view uniform)
+{
+    printf("Carregando texturas de cubemap...");
+
+    // Primeiro fazemos a leitura da imagem do disco
+    stbi_set_flip_vertically_on_load(false);
+
+    // Agora criamos objetos na GPU com OpenGL para armazenar a textura
+    GLuint texture_id;
+    GLuint textureunit = num_loaded_textures;
+    glGenTextures(1, &texture_id);
+    glActiveTexture(GL_TEXTURE0 + textureunit);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, texture_id);
+
+    for (int i = 0; i < 6; i++)
+    {
+        int width, height, channels;
+        float *data = stbi_loadf(filename[i].data(), &width, &height, &channels, 3);
+
+        if ( data == NULL )
+        {
+            fprintf(stderr, "ERROR: Cannot open image file \"%s\".\n", filename[i].data());
+            std::exit(EXIT_FAILURE);
+        }
+
+        printf("OK (%dx%d), ", width, height);
+
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data);
+
+        stbi_image_free(data);
+    }
+
+    printf(".\n");
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    glUseProgram(id);
+    glUniform1i(glGetUniformLocation(id, uniform.data()), num_loaded_textures);
+    glUseProgram(0);
+
+    texture_uniforms.push_back(uniform);
+
+    num_loaded_textures += 1;
+}
 
 // Função que carrega uma imagem para ser utilizada como textura
 void GpuProgram::load_texture_from_file(std::string_view filename,
@@ -259,8 +308,8 @@ void GpuProgram::load_texture_from_file(std::string_view filename,
     glGenSamplers(1, &sampler_id);
 
     // Veja slides 95-96 do documento Aula_20_Mapeamento_de_Texturas.pdf
-    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     // Parâmetros de amostragem da textura.
     glSamplerParameteri(sampler_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);

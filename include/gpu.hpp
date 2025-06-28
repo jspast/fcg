@@ -11,6 +11,8 @@
 #define BOARD 0
 #define PIECE 1
 #define TABLE 2
+#define SKY 3
+#define FLOOR 4
 
 #define WHITE 0
 #define BLACK 1
@@ -62,6 +64,9 @@ class GpuProgram {
         void set_uniform(std::string_view name, glm::mat4 value);
 
         GLint get_uniform_location(std::string_view name);
+
+        void load_cubemap_from_hdr_files(std::vector<std::string_view> filename,
+                                         std::string_view uniform);
 
         void load_texture_from_file(std::string_view filename,
                                     std::string_view uniform);
