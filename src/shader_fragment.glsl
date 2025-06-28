@@ -87,6 +87,23 @@ out vec4 color;
 #define SQUARE_SIZE 0.05789
 #define BOARD_START -4 * SQUARE_SIZE
 
+// FONTE: https://iquilezles.org/articles/functions/
+float gain(float x, float k)
+{
+    float a = 0.5 * pow(2.0 * ((x<0.5) ? x : 1.0-x), k);
+    return (x<0.5) ? a : 1.0-a;
+}
+
+// Simple fog
+// Inspired by: https://iquilezles.org/articles/fog/
+vec3 apply_fog(in vec3 color, in float distance)
+{
+    vec3  fog_color  = texture(SkyImage, vec3(0.5, -0.01, 0.5)).rgb;
+    float fog_amount = 1.0 - exp(-distance * 0.015);
+    fog_amount = gain(fog_amount, 1.5);
+    return mix(color, fog_color, fog_amount);
+}
+
 ivec2 get_current_square()
 {
     ivec2 square;
@@ -196,7 +213,8 @@ void main()
 
         case SKY:
             color.rgb = texture(SkyImage, texcoords_skybox).rgb;
-            color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/3.5);
+            color.rgb = apply_fog(color.rgb, 10 * length((camera_position - p).xz));
+            color.rgb = pow(color.rgb, vec3(1.0)/3.5);
             return;
 
         case FLOOR:
@@ -266,7 +284,9 @@ void main()
     // especular, e ambiente. Veja slide 129 do documento Aula_17_e_18_Modelos_de_Iluminacao.pdf.
     color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
 
+    color.rgb = apply_fog(color.rgb, length(camera_position - p));
+
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
-    color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
+    color.rgb = pow(color.rgb, vec3(1.0)/2.2);
 }
