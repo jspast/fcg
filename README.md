@@ -8,6 +8,8 @@ Dupla: João Pastorello e Isadora Schwaab
 
 ## Uso de IAs generativas
 
+O **ChatGPT** foi utilizado principalmente para esclarescer conceitos de C++, como o uso de ponteiros inteligentes, estruturas de dados e processamento assíncrono. Além disso, gerou um esboço do sistema de estados (classes `GameState` e `GameStateManager`) que foi adaptado e incrementado para a utilização no jogo. No geral, a ferramenta foi útil, mas se mostrou incapaz de auxiliar com decisões complexas. Conseguiu substituir muitas buscas rápidas na documentação e internet, mas não tarefas de raciocínio lógico avançado.
+
 ## Conceitos de Computação Gráfica aplicados no desenvolvimento
 
 ## Manual de usuário

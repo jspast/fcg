@@ -2,6 +2,7 @@
 
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <memory>
 
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
@@ -157,7 +158,7 @@ class FreeCamera: public Camera {
         void move(float forward_displacement, float left_displacement);
 };
 
-FreeCamera build_free_camera(Camera *camera);
+std::shared_ptr<FreeCamera> build_free_camera(std::shared_ptr<Camera> camera);
 
-LookAtCamera build_lookat_camera(Camera *camera, float distance = 1.0f);
-LookAtCamera build_lookat_camera(Camera *camera, glm::vec4 target_position, float distance);
+std::shared_ptr<LookAtCamera> build_lookat_camera(std::shared_ptr<Camera> camera, float distance = 1.0f);
+std::shared_ptr<LookAtCamera> build_lookat_camera(std::shared_ptr<Camera> camera, glm::vec4 target_position, float distance);

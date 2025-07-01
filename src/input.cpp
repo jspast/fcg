@@ -98,6 +98,7 @@ void InputManager::update()
     gamepad_state_is_updated.fill(false);
     last_keys = keys;
     last_mouse_buttons = mouse_buttons;
+    last_cursor_position = cursor_position;
 }
 
 void InputManager::update_gamepad_state(int joystick)
@@ -186,21 +187,17 @@ void InputManager::set_right_trigger_treshold(int joystick, float treshold)
 glm::vec2 InputManager::get_cursor_position()
 {
     if (is_enabled)
-        last_cursor_position = cursor_position;
+        return cursor_position;
 
-    return last_cursor_position;
+    return glm::vec2(0.0f, 0.0f);
 }
 
 glm::vec2 InputManager::get_cursor_movement()
 {
-    glm::vec2 result = glm::vec2(0.0f, 0.0f);
-
     if (is_enabled)
-        result = cursor_position - last_cursor_position;
+        return cursor_position - last_cursor_position;
 
-    last_cursor_position = cursor_position;
-
-    return result;
+    return glm::vec2(0.0f, 0.0f);
 }
 
 glm::vec2 InputManager::get_scroll_offset()

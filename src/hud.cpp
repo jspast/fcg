@@ -1,11 +1,13 @@
 #include <format>
+#include <memory>
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
-#include "hud.hpp"
-#include "glm/ext/vector_float4.hpp"
+#include <glm/ext/vector_float4.hpp>
+
 #include "textrendering.hpp"
+#include "hud.hpp"
 
 #define TIMINGS_UPDATE_INTERVAL 1.0f
 
@@ -16,9 +18,10 @@
 #define HUD_START (-1.0f + BORDER_MARGIN)
 #define HUD_END (1.0f - BORDER_MARGIN)
 
-Hud::Hud(GLFWwindow *w)
+Hud::Hud(GLFWwindow *w, std::shared_ptr<Camera> *c)
 {
     window = w;
+    camera = c;
 
     debug_vendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
     debug_renderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
@@ -59,15 +62,25 @@ void Hud::update_timings()
     }
 }
 
-void Hud::update(Camera& c, glm::vec2 cursor, glm::vec4 cursor_intersection)
+void Hud::update(glm::vec2 cur, glm::vec4 cur_i)
 {
     update_timings();
 
-    if (show_debug_info)
-        render_debug_info(c, cursor, cursor_intersection);
+    cursor_pos = cur;
+    cursor_intersection = cur_i;
 }
 
-void Hud::render_debug_info(Camera& c, glm::vec2 cursor, glm::vec4 cursor_intersection)
+void Hud::draw()
+{
+    glDisable(GL_DEPTH_TEST);
+
+    if (show_debug_info)
+        render_debug_info();
+
+    glEnable(GL_DEPTH_TEST);
+}
+
+void Hud::render_debug_info()
 {
     float lineheight = TextRendering_LineHeight(window);
     float charwidth = TextRendering_CharWidth(window);
@@ -84,20 +97,20 @@ void Hud::render_debug_info(Camera& c, glm::vec2 cursor, glm::vec4 cursor_inters
     TextRendering_PrintString(window, std::format("Frametime: {:.2f} ms", frametime),
                               HUD_START, HUD_TOP - 5*lineheight);
 
-    glm::vec4 cam_pos = c.get_position();
+    glm::vec4 cam_pos = camera->get()->get_position();
 
     TextRendering_PrintString(window, std::format("Camera position: X: {:.2f} Y: {:.2f} Z: {:.2f}",
                                         cam_pos.x, cam_pos.y, cam_pos.z),
                               HUD_START, HUD_TOP - 7*lineheight);
 
     TextRendering_PrintString(window, std::format("Cursor position: X: {:.2f} Y: {:.2f}",
-                                        cursor.x, cursor.y),
+                                        cursor_pos.x, cursor_pos.y),
                               HUD_START, HUD_TOP - 9*lineheight);
 
     TextRendering_PrintString(window, std::format("Cursor-Board intersection position: X: {:.2f} Y: {:.2f} Z: {:.2f}",
                                         cursor_intersection.x, cursor_intersection.y, cursor_intersection.z),
                               HUD_START, HUD_TOP - 10*lineheight);
 
-    TextRendering_PrintString(window, c.is_projection_perspective() ? "Perspective" : "Orthographic",
+    TextRendering_PrintString(window, camera->get()->is_projection_perspective() ? "Perspective" : "Orthographic",
                               HUD_START, HUD_BOTTOM + 2*lineheight/10);
 }

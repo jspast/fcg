@@ -14,6 +14,10 @@ set(SOURCES
   src/chess_game.cpp
   src/gpu.cpp
   src/collisions.cpp
+  src/state.cpp
+  src/states/base.cpp
+  src/states/loading.cpp
+  src/states/game.cpp
 )
 
 cmake_minimum_required(VERSION 3.11.0)

@@ -25,6 +25,7 @@ ObjModel::ObjModel(std::string inputfile, std::string mtl_search_path, bool tria
         if (i != std::string::npos)
             mtl_search_path = fullpath.substr(0, i+1);
     }
+    reader_config.triangulate = triangulate;
     reader_config.mtl_search_path = mtl_search_path;
 
     if (!reader.ParseFromFile(inputfile, reader_config)) {
@@ -41,6 +42,9 @@ ObjModel::ObjModel(std::string inputfile, std::string mtl_search_path, bool tria
     attrib = reader.GetAttrib();
     shapes = reader.GetShapes();
     materials = reader.GetMaterials();
+
+    compute_normals();
+    build_triangles();
 }
 
 void ObjModel::compute_normals()
@@ -282,8 +286,9 @@ void ObjModel::build_triangles()
     glBindVertexArray(0);
 }
 
-void ObjModel::draw(size_t num_instances)
+void ObjModel::draw(GpuProgram& gpu_program, size_t num_instances)
 {
+    glUseProgram(gpu_program.id);
     glBindVertexArray(vao_id);
 
     if (num_instances == 1)
@@ -292,6 +297,7 @@ void ObjModel::draw(size_t num_instances)
         glDrawElementsInstanced(GL_TRIANGLES, num_indices, GL_UNSIGNED_INT, 0, num_instances);
 
     glBindVertexArray(0);
+    glUseProgram(0);
 }
 
 // Função para debugging: imprime no terminal todas informações de um modelo
@@ -459,7 +465,10 @@ void ObjModel::print_info()
   }
 }
 
-Object::Object(ObjModel& m, GpuProgram& gpu) : model(m), gpu_program(gpu) {}
+Object::Object(std::shared_ptr<ObjModel> m, GpuProgram& gpu) : gpu_program(gpu)
+{
+    model = m;
+}
 
 void Object::draw(const glm::mat4 parent_transform)
 {
@@ -470,14 +479,14 @@ void Object::draw(const glm::mat4 parent_transform)
     // Always set model matrix
     gpu_program.set_uniform("model", t);
 
-    model.draw(num_instances);
+    model->draw(gpu_program, num_instances);
 
-    for (Object* child : children) {
+    for (auto& child : children) {
         child->draw(t);
     }
 }
 
-void Object::add_child(Object* child)
+void Object::add_child(std::shared_ptr<Object> child)
 {
     children.push_back(child);
 }

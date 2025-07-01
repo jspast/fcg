@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <variant>
@@ -39,7 +40,7 @@ class ObjModel {
         void compute_normals();
 
         void build_triangles();
-        void draw(size_t num_instances = 1);
+        void draw(GpuProgram& gpu_program, size_t num_instances = 1);
 
         void print_info();
 
@@ -51,11 +52,11 @@ class Object {
     public:
         using UniformValue = std::variant<float, int, glm::vec2, glm::vec4, glm::mat4>;
 
-        ObjModel& model;
+        std::shared_ptr<ObjModel> model;
 
-        Object(ObjModel& model, GpuProgram& gpu_program);
+        Object(std::shared_ptr<ObjModel> model, GpuProgram& gpu_program);
 
-        void add_child(Object* child);
+        void add_child(std::shared_ptr<Object> child);
 
         void set_instances(size_t num_instances);
 
@@ -73,6 +74,5 @@ class Object {
         glm::mat4 transform = Matrix_Identity();
         size_t num_instances = 1;
 
-        std::vector<Object*> children;
-
+        std::vector<std::shared_ptr<Object>> children;
 };

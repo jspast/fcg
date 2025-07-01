@@ -1,8 +1,10 @@
+#include <memory>
+
 #include "camera.hpp"
 
 template<typename Base, typename T>
-inline bool instanceof(const T *ptr) {
-    return dynamic_cast<const Base*>(ptr) != nullptr;
+inline bool instanceof(const std::shared_ptr<T> ptr) {
+    return std::dynamic_pointer_cast<Base>(ptr) != nullptr;
 }
 
 void Camera::set_position(float nx, float ny, float nz)
@@ -254,7 +256,7 @@ void FreeCamera::move(float forward_displacement, float left_displacement)
 }
 
 // Copy camera properties shared between implementations
-void copy_camera(Camera *dst, Camera *src)
+void copy_camera(std::shared_ptr<Camera> dst, std::shared_ptr<Camera> src)
 {
     dst->set_position(src->get_position());
     dst->set_nearplane_distance(src->get_nearplane_distance());
@@ -267,23 +269,23 @@ void copy_camera(Camera *dst, Camera *src)
     dst->set_orthographic_zoom_max(src->get_orthographic_zoom_max());
 }
 
-FreeCamera build_free_camera(Camera* camera)
+std::shared_ptr<FreeCamera> build_free_camera(std::shared_ptr<Camera> camera)
 {
     // Do nothing if camera is already a FreeCamera
     if (instanceof<FreeCamera>(camera))
-        return *static_cast<FreeCamera*>(camera);
+        return std::static_pointer_cast<FreeCamera>(camera);
 
-    FreeCamera fc;
+    std::shared_ptr<FreeCamera> fc = std::make_shared<FreeCamera>();
 
     // Update camera angles
-    fc.set_angles(camera->get_theta() + M_PI, camera->get_phi());
+    fc->set_angles(camera->get_theta() + M_PI, camera->get_phi());
 
-    copy_camera(&fc, camera);
+    copy_camera(fc, camera);
 
     return fc;
 }
 
-LookAtCamera build_lookat_camera(Camera *camera, float distance)
+std::shared_ptr<LookAtCamera> build_lookat_camera(std::shared_ptr<Camera> camera, float distance)
 {
     // Compute the target position keeping camera position and orientation based on the desired distance
     glm::vec4 target_position = camera->get_position() + distance * camera->get_view_vector() / norm(camera->get_view_vector());
@@ -291,22 +293,22 @@ LookAtCamera build_lookat_camera(Camera *camera, float distance)
     return build_lookat_camera(camera, target_position, distance);
 }
 
-LookAtCamera build_lookat_camera(Camera *camera, glm::vec4 target_position, float distance)
+std::shared_ptr<LookAtCamera> build_lookat_camera(std::shared_ptr<Camera> camera, glm::vec4 target_position, float distance)
 {
     // Do nothing if camera is already a LookAtCamera
     if (instanceof<LookAtCamera>(camera))
-        return *static_cast<LookAtCamera*>(camera);
+        return std::static_pointer_cast<LookAtCamera>(camera);
 
-    LookAtCamera lc;
+    std::shared_ptr<LookAtCamera> lc = std::make_shared<LookAtCamera>();
 
     // Set new camera properties
-    lc.set_target_position(target_position);
-    lc.set_distance(distance);
+    lc->set_target_position(target_position);
+    lc->set_distance(distance);
 
     // Update camera angles
-    lc.set_angles(camera->get_theta() + M_PI, camera->get_phi());
+    lc->set_angles(camera->get_theta() + M_PI, camera->get_phi());
 
-    copy_camera(&lc, camera);
+    copy_camera(lc, camera);
 
     return lc;
 }

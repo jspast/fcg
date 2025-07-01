@@ -1,3 +1,4 @@
+#include <ostream>
 #include <string_view>
 #include <string>
 #include <iostream>
@@ -202,27 +203,37 @@ void GpuProgram::create_program()
 
 void GpuProgram::set_uniform(std::string_view name, float value)
 {
+    glUseProgram(id);
     glUniform1f(get_uniform_location(name), value);
+    glUseProgram(0);
 }
 
 void GpuProgram::set_uniform(std::string_view name, int value)
 {
+    glUseProgram(id);
     glUniform1i(get_uniform_location(name), value);
+    glUseProgram(0);
 }
 
 void GpuProgram::set_uniform(std::string_view name, glm::vec2 value)
 {
+    glUseProgram(id);
     glUniform2fv(get_uniform_location(name), 1, glm::value_ptr(value));
+    glUseProgram(0);
 }
 
 void GpuProgram::set_uniform(std::string_view name, glm::vec4 value)
 {
+    glUseProgram(id);
     glUniform4fv(get_uniform_location(name), 1, glm::value_ptr(value));
+    glUseProgram(0);
 }
 
 void GpuProgram::set_uniform(std::string_view name, glm::mat4 value)
 {
+    glUseProgram(id);
     glUniformMatrix4fv(get_uniform_location(name), 1, GL_FALSE, glm::value_ptr(value));
+    glUseProgram(0);
 }
 
 GLint GpuProgram::get_uniform_location(std::string_view name)
@@ -240,7 +251,7 @@ void GpuProgram::load_cubemap_from_hdr_files(std::vector<std::string_view> filen
 
     // Agora criamos objetos na GPU com OpenGL para armazenar a textura
     GLuint texture_id;
-    GLuint textureunit = num_loaded_textures;
+    GLuint textureunit = num_uploaded_textures;
     glGenTextures(1, &texture_id);
     glActiveTexture(GL_TEXTURE0 + textureunit);
     glBindTexture(GL_TEXTURE_CUBE_MAP, texture_id);
@@ -272,71 +283,102 @@ void GpuProgram::load_cubemap_from_hdr_files(std::vector<std::string_view> filen
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
     glUseProgram(id);
-    glUniform1i(glGetUniformLocation(id, uniform.data()), num_loaded_textures);
+    glUniform1i(glGetUniformLocation(id, uniform.data()), num_uploaded_textures);
     glUseProgram(0);
 
     texture_uniforms.push_back(uniform);
 
-    num_loaded_textures += 1;
+    num_loaded_textures++;
+    num_uploaded_textures++;
 }
 
-// Função que carrega uma imagem para ser utilizada como textura
-void GpuProgram::load_texture_from_file(std::string_view filename,
-                                        std::string_view uniform)
+void GpuProgram::load_textures_async(std::vector<std::pair<std::string_view, std::string_view>> textures)
 {
-    printf("Carregando imagem \"%s\"... ", filename.data());
-
-    // Primeiro fazemos a leitura da imagem do disco
     stbi_set_flip_vertically_on_load(true);
-    int width;
-    int height;
-    int channels;
-    unsigned char *data = stbi_load(filename.data(), &width, &height, &channels, 3);
 
-    if ( data == NULL )
-    {
-        fprintf(stderr, "ERROR: Cannot open image file \"%s\".\n", filename.data());
-        std::exit(EXIT_FAILURE);
+    for (const auto& [filepath, uniform] : textures) {
+
+        num_loaded_textures++;
+
+        tex_futures.emplace_back(std::async(std::launch::async, [filepath, uniform]() {
+
+            int w, h, c;
+            unsigned char* data = stbi_load(filepath.data(), &w, &h, &c, 3);
+
+            if (!data)
+                throw std::runtime_error( "ERROR: Cannot open image file \"" + std::string(filepath) + "\".");
+
+            std::cout << "Carregando imagem \"" << filepath << "\" ... OK (" << w << "x" << h << ")." << std::endl;
+
+            TextureData result;
+            result.uniform_name = uniform;
+            result.width = w;
+            result.height = h;
+            result.channels = 3;
+            result.data = data;
+            return result;
+        }));
+    }
+}
+
+bool GpuProgram::upload_pending_textures()
+{
+    for (auto it = tex_futures.begin(); it != tex_futures.end(); ) {
+        if (it->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+            tex_queue.push(it->get());
+            it = tex_futures.erase(it);
+        } else {
+            ++it;
+        }
     }
 
-    printf("OK (%dx%d).\n", width, height);
+    // Upload ready textures to GPU
+    while (!tex_queue.empty()) {
+        const auto& tex = tex_queue.front();
 
-    // Agora criamos objetos na GPU com OpenGL para armazenar a textura
-    GLuint texture_id;
-    GLuint sampler_id;
-    glGenTextures(1, &texture_id);
-    glGenSamplers(1, &sampler_id);
+        // Agora criamos objetos na GPU com OpenGL para armazenar a textura
+        GLuint texture_id;
+        GLuint sampler_id;
+        glGenTextures(1, &texture_id);
+        glGenSamplers(1, &sampler_id);
 
-    // Veja slides 95-96 do documento Aula_20_Mapeamento_de_Texturas.pdf
-    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        // Veja slides 95-96 do documento Aula_20_Mapeamento_de_Texturas.pdf
+        glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    // Parâmetros de amostragem da textura.
-    glSamplerParameteri(sampler_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glSamplerParameteri(sampler_id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // Parâmetros de amostragem da textura.
+        glSamplerParameteri(sampler_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glSamplerParameteri(sampler_id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glSamplerParameterf(sampler_id, GL_TEXTURE_MAX_ANISOTROPY_EXT, 8.0f);
+        glSamplerParameterf(sampler_id, GL_TEXTURE_MAX_ANISOTROPY_EXT, 8.0f);
 
-    // Agora enviamos a imagem lida do disco para a GPU
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-    glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-    glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+        // Agora enviamos a imagem lida do disco para a GPU
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+        glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+        glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 
-    GLuint textureunit = num_loaded_textures;
-    glActiveTexture(GL_TEXTURE0 + textureunit);
-    glBindTexture(GL_TEXTURE_2D, texture_id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    glBindSampler(textureunit, sampler_id);
+        GLuint textureunit = num_uploaded_textures;
+        glActiveTexture(GL_TEXTURE0 + textureunit);
+        glBindTexture(GL_TEXTURE_2D, texture_id);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, tex.width, tex.height, 0, GL_RGB, GL_UNSIGNED_BYTE, tex.data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glBindSampler(textureunit, sampler_id);
 
-    stbi_image_free(data);
+        stbi_image_free(tex.data);
 
-    glUseProgram(id);
-    glUniform1i(glGetUniformLocation(id, uniform.data()), num_loaded_textures);
-    glUseProgram(0);
+        glUseProgram(id);
+        glUniform1i(glGetUniformLocation(id,
+                                         tex.uniform_name.data()),
+                                         num_uploaded_textures);
+        glUseProgram(0);
 
-    texture_uniforms.push_back(uniform);
+        texture_uniforms.push_back(tex.uniform_name);
 
-    num_loaded_textures += 1;
+        num_uploaded_textures++;
+
+        tex_queue.pop();
+    }
+
+    return tex_futures.empty() && tex_queue.empty();
 }
