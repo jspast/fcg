@@ -85,7 +85,7 @@ uniform sampler2D BlackPiecesRoughness;
 out vec4 color;
 
 #define SQUARE_SIZE 0.05789
-#define BOARD_START -4 * SQUARE_SIZE
+#define BOARD_START (-4 * SQUARE_SIZE)
 
 // FONTE: https://iquilezles.org/articles/functions/
 float gain(float x, float k)
@@ -104,6 +104,32 @@ vec3 apply_fog(in vec3 color, in float distance)
     return mix(color, fog_color, fog_amount);
 }
 
+vec3 lambert_diffuse_term(vec3 diffuse_light_color,
+                          vec3 surface_color,
+                          vec4 normal,
+                          vec4 light_vec)
+{
+    return surface_color * diffuse_light_color * max(0.0, dot(normal, light_vec));
+}
+
+vec3 ambient_term(vec3 ambient_light_color,
+                  vec3 ambient_refl_color)
+{
+    return ambient_light_color * ambient_refl_color;
+}
+
+vec3 blinn_phong_specular_term(vec3 specular_light_color,
+                               vec3 specular_refl_color,
+                               vec4 normal,
+                               vec4 light_vec,
+                               vec4 refl_vec,
+                               float q)
+{
+    vec4 half_vec = (refl_vec + light_vec) / length(refl_vec + light_vec);
+
+    return specular_refl_color * specular_light_color * pow(dot(normal, half_vec), q);
+}
+
 ivec2 get_current_square()
 {
     ivec2 square;
@@ -116,13 +142,6 @@ ivec2 get_current_square()
 
 void main()
 {
-    vec4 norm = normal;
-
-    // Obtemos a posição da câmera utilizando a inversa da matriz que define o
-    // sistema de coordenadas da câmera.
-    vec4 origin = vec4(0.0, 0.0, 0.0, 1.0);
-    vec4 camera_position = inverse(view) * origin;
-
     // O fragmento atual é coberto por um ponto que percente à superfície de um
     // dos objetos virtuais da cena. Este ponto, p, possui uma posição no
     // sistema de coordenadas global (World coordinates). Esta posição é obtida
@@ -130,87 +149,43 @@ void main()
     // vértice.
     vec4 p = position_world;
 
+    vec4 norm = normal;
+
+    // Obtemos a posição da câmera utilizando a inversa da matriz que define o
+    // sistema de coordenadas da câmera.
+    vec4 origin = vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 camera_position = inverse(view) * origin;
+
+    vec4 light_pos = vec4(40.0,100.0,80.0,1.0);
+
+    // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
+    vec4 light_vec = normalize(light_pos - p);
+
+    // Espectro da fonte de luz
+    vec3 diffuse_light_color = vec3(1.0,1.0,1.0);
+
+    // Refletância difusa
+    vec3 surface_color = vec3(0.0, 0.0, 0.0);
+
+    vec3 ambient_light_color = vec3(0.1, 0.2, 0.3);
+
+    // Refletância ambiente
+    vec3 ambient_refl_color = vec3(0.2, 0.2, 0.2);
+
+    // Refletância especular
+    vec3 specular_refl_color = vec3(0.5, 0.5, 0.5);
+
+    vec3 specular_light_color = vec3(1.0,1.0,1.0);
+
+    vec4 refl_vec = vec4(0.0, 0.0, 0.0, 0.0);
+
+    // Expoente especular para o modelo de iluminação de Blinn-Phong
+    float q = 1.0;
+
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
 
-    vec3 R;
-
-    // Parâmetros que definem as propriedades espectrais da superfície
-    vec3 Kd; // Refletância difusa
-    vec3 Ks; // Refletância especular
-    vec3 Ka; // Refletância ambiente
-    float q; // Expoente especular para o modelo de iluminação de Phong
-
-    // Coordenadas de textura U e V
-    float U = texcoords.x;
-    float V = texcoords.y;
-
     switch (object_id) {
-        // Propriedades espectrais das peças
-        case PIECE:
-            switch (piece_color) {
-                case WHITE:
-                    norm = texture(WhitePiecesNormal, vec2(U,V)) * 2.0 - 0.5;
-                    norm.xyz = normalize(tbn * norm.xyz);
-                    norm.w = 0.0;
-
-                    Kd = texture(WhitePiecesImage, vec2(U,V)).rgb;
-                    Ks = max(vec3(0.0), 0.2 - 0.5 * texture(WhitePiecesRoughness, vec2(U,V)).rgb);
-                    Ka = Kd * texture(WhitePiecesAmbient, vec2(U,V)).rgb;
-                    q = 32.0;
-                    break;
-                    break;
-
-                case BLACK:
-                    norm = texture(BlackPiecesNormal, vec2(U,V)) * 2.0 - 0.5;
-                    norm.xyz = normalize(tbn * norm.xyz);
-                    norm.w = 0.0;
-
-                    Kd = texture(BlackPiecesImage, vec2(U,V)).rgb;
-                    Ks = max(vec3(0.0), 0.2 - 0.5 * texture(BlackPiecesRoughness, vec2(U,V)).rgb);
-                    Ka = Kd * texture(BlackPiecesAmbient, vec2(U,V)).rgb;
-                    q = 32.0;
-                    break;
-            }
-            break;
-
-        // Propriedades espectrais da mesa
-        case TABLE:
-            norm = texture(TableNormal, vec2(U,V)) * 2.0 - 0.5;
-            norm.xyz = normalize(tbn * norm.xyz);
-            norm.w = 0.0;
-
-            Kd = texture(TableImage, vec2(U,V)).rgb;
-            Ks = max(vec3(0.0), 0.2 - 1.5 * texture(TableRoughness, vec2(U,V)).rgb);
-            // Vetor de reflexão
-            R = reflect(-v.xyz, norm.xyz);
-            Ks *= 0.5 * texture(SkyImage, R).rgb;
-            Ka = Kd * texture(TableAmbient, vec2(U,V)).rgb;
-            q = 16.0;
-            break;
-
-        // Propriedades espectrais do tabuleiro
-        case BOARD:
-            norm = texture(BoardNormal, vec2(U,V)) * 2.0 - 0.5;
-            norm.xyz = normalize(tbn * norm.xyz);
-            norm.w = 0.0;
-
-            Kd = texture(BoardImage, vec2(U,V)).rgb;
-            Ks = 0.1 - 0.1 * texture(BoardRoughness, vec2(U,V)).rgb;
-            // Vetor de reflexão
-            R = reflect(-v.xyz, norm.xyz);
-            Ks *= 0.5 * texture(SkyImage, R).rgb;
-            Ka = Kd * texture(BoardAmbient, vec2(U,V)).rgb;
-            q = 64.0;
-
-            if (get_current_square() == selecting_square) {
-                Kd *= 0.1;
-                Kd += 0.1;
-                Kd.g += 0.8;
-            }
-
-            break;
-
         case SKY:
             color.rgb = texture(SkyImage, texcoords_skybox).rgb;
             color.rgb = apply_fog(color.rgb, 10 * length((camera_position - p).xz));
@@ -218,53 +193,87 @@ void main()
             return;
 
         case FLOOR:
-            norm = texture(FloorNormal, 50 * vec2(U,V)) * 2.0 - 0.5;
-            norm.xyz = normalize(tbn * norm.xyz);
-            norm.w = 0.0;
+            norm = texture(FloorNormal, 50 * texcoords) * 2.0 - 0.5;
+            norm = vec4(normalize(tbn * norm.xyz), 0.0);
 
-            Kd = texture(FloorImage, 50 * vec2(U,V)).rgb;
-            Ks = vec3(0.0);
-            Ka = Kd * 1.0 * texture(FloorAmbient, 50 * vec2(U,V)).rgb;
-            q = 1.0;
+            surface_color = texture(FloorImage, 50 * texcoords).rgb;
+            ambient_refl_color = surface_color * texture(FloorAmbient, 50 * texcoords).rgb;
+            specular_refl_color = vec3(0.0);
             break;
 
-        // Objeto desconhecido = preto
-        default:
-            Kd = vec3(0.0,0.0,0.0);
-            Ks = vec3(0.0,0.0,0.0);
-            Ka = vec3(0.0,0.0,0.0);
-            q = 1.0;
+        case TABLE:
+            norm = texture(TableNormal, texcoords) * 2.0 - 0.5;
+            norm = vec4(normalize(tbn * norm.xyz), 0.0);
+
+            surface_color = texture(TableImage, texcoords).rgb;
+            ambient_refl_color = surface_color * texture(TableAmbient, texcoords).rgb;
+
+            refl_vec = reflect(-v, norm);
+            specular_light_color = texture(SkyImage, refl_vec.xyz).rgb;
+            specular_refl_color = 0.2 * max(vec3(0.0), (1 - 12 * texture(TableRoughness, texcoords).rgb));
+
+            q = 8.0;
+            break;
+
+        case BOARD:
+            norm = texture(BoardNormal, texcoords) * 2.0 - 0.5;
+            norm = vec4(normalize(tbn * norm.xyz), 0.0);
+
+            surface_color = texture(BoardImage, texcoords).rgb;
+            ambient_refl_color = surface_color * texture(BoardAmbient, texcoords).rgb;
+
+            refl_vec = reflect(-v, norm);
+            specular_light_color = texture(SkyImage, refl_vec.xyz).rgb;
+            specular_refl_color = 0.2 * (1 - texture(BoardRoughness, texcoords).rgb);
+
+            q = 6.0;
+
+            if (get_current_square() == selecting_square) {
+                surface_color *= 0.1;
+                surface_color += 0.1;
+                surface_color.g += 0.8;
+            }
+            break;
+
+        case PIECE:
+            switch (piece_color) {
+                case WHITE:
+                    norm = texture(WhitePiecesNormal, texcoords) * 2.0 - 0.5;
+                    norm = vec4(normalize(tbn * norm.xyz), 0.0);
+
+                    surface_color = texture(WhitePiecesImage, texcoords).rgb;
+                    ambient_refl_color = surface_color * texture(WhitePiecesAmbient, texcoords).rgb;
+                    specular_refl_color = vec3(0.0);
+                    break;
+
+                case BLACK:
+                    norm = texture(BlackPiecesNormal, texcoords) * 2.0 - 0.5;
+                    norm = vec4(normalize(tbn * norm.xyz), 0.0);
+
+                    surface_color = texture(BlackPiecesImage, texcoords).rgb;
+                    ambient_refl_color = surface_color * texture(BlackPiecesAmbient, texcoords).rgb;
+
+                    refl_vec = reflect(-v, norm);
+                    specular_light_color = texture(SkyImage, refl_vec.xyz).rgb;
+                    specular_refl_color = 0.1 * (1 - texture(BlackPiecesRoughness, texcoords).rgb);
+                    q = 6.0;
+                    break;
+            }
             break;
     }
 
-    // Normal do fragmento atual, interpolada pelo rasterizador a partir das
-    // normais de cada vértice.
-    vec4 n = normalize(norm);
-
-    vec4 l_pos = vec4(40.0,100.0,80.0,1.0);
-    vec4 l_vec = vec4(0.0,-1.0,0.0,0.0);
-    float a = radians(30.0);
-
-    // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4 l = normalize(l_pos - p);
-
-    // Vetor que define o sentido da reflexão especular ideal.
-    vec4 r = -l + 2.0 * n * dot(n, l); // Vetor de reflexão especular ideal
-
-    // Espectro da fonte de iluminação
-    vec3 I = vec3(1.0,1.0,1.0); // Espectro da fonte de luz
-
-    // Espectro da luz ambiente
-    vec3 Ia = vec3(0.2,0.2,0.2); // Espectro da luz ambiente
-
     // Termo difuso utilizando a lei dos cossenos de Lambert
-    vec3 lambert_diffuse_term = Kd * I * max(0.0, dot(n, l)); // Termo difuso de Lambert
+    vec3 diffuse_term = lambert_diffuse_term(diffuse_light_color, surface_color, norm, light_vec);
 
     // Termo ambiente
-    vec3 ambient_term = Ka * Ia; // Termo ambiente
+    vec3 ambient_term_ = ambient_term(ambient_light_color, ambient_refl_color);
 
-    // Termo especular utilizando o modelo de iluminação de Phong
-    vec3 phong_specular_term  = Ks * I * pow(max(0.0, dot(r, v)), q); // Termo especular de Phong
+    vec3 specular_term;
+    if (specular_refl_color == vec3(0.0))
+        specular_term = vec3(0.0);
+    else
+        // Termo especular utilizando o modelo de iluminação de Blinn-Phong
+        specular_term = blinn_phong_specular_term(specular_light_color, specular_refl_color, norm, light_vec, refl_vec, q);
 
     // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
     // necessário:
@@ -282,7 +291,9 @@ void main()
 
     // Cor final do fragmento calculada com uma combinação dos termos difuso,
     // especular, e ambiente. Veja slide 129 do documento Aula_17_e_18_Modelos_de_Iluminacao.pdf.
-    color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
+    //color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
+
+    color.rgb = diffuse_term + ambient_term_ + specular_term;
 
     color.rgb = apply_fog(color.rgb, length(camera_position - p));
 
