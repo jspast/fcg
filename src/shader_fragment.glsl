@@ -238,9 +238,6 @@ void main()
         case PIECE:
             switch (piece_color) {
                 case WHITE:
-                    norm = texture(WhitePiecesNormal, texcoords) * 2.0 - 0.5;
-                    norm = vec4(normalize(tbn * norm.xyz), 0.0);
-
                     surface_color = texture(WhitePiecesImage, texcoords).rgb;
                     ambient_refl_color = surface_color * texture(WhitePiecesAmbient, texcoords).rgb;
                     specular_refl_color = vec3(0.0);
