@@ -96,7 +96,7 @@ float gain(float x, float k)
 
 // Simple fog
 // Inspired by: https://iquilezles.org/articles/fog/
-vec3 apply_fog(in vec3 color, in float distance)
+vec3 apply_fog(vec3 color, float distance)
 {
     vec3  fog_color  = texture(SkyImage, vec3(0.5, -0.01, 0.5)).rgb;
     float fog_amount = 1.0 - exp(-distance * 0.015);
@@ -179,6 +179,9 @@ void main()
 
     vec4 refl_vec = vec4(0.0, 0.0, 0.0, 0.0);
 
+    // Alpha default = 1 = 100% opaco = 0% transparente
+    color.a = 1;
+
     // Expoente especular para o modelo de iluminação de Blinn-Phong
     float q = 1.0;
 
@@ -212,7 +215,7 @@ void main()
             specular_light_color = texture(SkyImage, refl_vec.xyz).rgb;
             specular_refl_color = 0.2 * max(vec3(0.0), (1 - 12 * texture(TableRoughness, texcoords).rgb));
 
-            q = 8.0;
+            q = 4.0;
             break;
 
         case BOARD:
@@ -241,6 +244,8 @@ void main()
                     surface_color = texture(WhitePiecesImage, texcoords).rgb;
                     ambient_refl_color = surface_color * texture(WhitePiecesAmbient, texcoords).rgb;
                     specular_refl_color = vec3(0.0);
+
+                    color.a = 0.5;
                     break;
 
                 case BLACK:
@@ -271,24 +276,6 @@ void main()
     else
         // Termo especular utilizando o modelo de iluminação de Blinn-Phong
         specular_term = blinn_phong_specular_term(specular_light_color, specular_refl_color, norm, light_vec, refl_vec, q);
-
-    // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
-    // necessário:
-    // 1) Habilitar a operação de "blending" de OpenGL logo antes de realizar o
-    //    desenho dos objetos transparentes, com os comandos abaixo no código C++:
-    //      glEnable(GL_BLEND);
-    //      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    // 2) Realizar o desenho de todos objetos transparentes *após* ter desenhado
-    //    todos os objetos opacos; e
-    // 3) Realizar o desenho de objetos transparentes ordenados de acordo com
-    //    suas distâncias para a câmera (desenhando primeiro objetos
-    //    transparentes que estão mais longe da câmera).
-    // Alpha default = 1 = 100% opaco = 0% transparente
-    color.a = 1;
-
-    // Cor final do fragmento calculada com uma combinação dos termos difuso,
-    // especular, e ambiente. Veja slide 129 do documento Aula_17_e_18_Modelos_de_Iluminacao.pdf.
-    //color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
 
     color.rgb = diffuse_term + ambient_term_ + specular_term;
 

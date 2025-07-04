@@ -118,13 +118,17 @@ void GameplayState::load()
     board->add_child(king);
     table->add_child(board);
 
-    // Habilitamos o Z-buffer. Veja slides 104-116 do documento Aula_09_Projecoes.pdf.
+    // Enable Z-buffer
     glEnable(GL_DEPTH_TEST);
 
-    // Habilitamos o backface culling
+    // Enable backface culling
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
+
+    // Enable transparent objects
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void GameplayState::unload() {}

@@ -26,8 +26,8 @@ out vec3 texcoords_skybox;
 // fragment shader, caso necessário.
 flat out int instanceID;
 
-#define SQUARE_SIZE 0.05789 * 1.5f
-#define BOARD_START -4 * SQUARE_SIZE
+#define SQUARE_SIZE (0.05789 * 1.5f)
+#define BOARD_START (-4 * SQUARE_SIZE)
 
 void main()
 {
