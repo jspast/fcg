@@ -11,6 +11,19 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
+// Identificador que define qual objeto está sendo desenhado no momento
+#define BOARD 0
+#define PIECE 1
+#define TABLE 2
+#define SKY 3
+#define FLOOR 4
+uniform int object_id;
+
+// Identificador que define qual a cor do objeto
+#define WHITE 0
+#define BLACK 1
+uniform int piece_color;
+
 // Atributos de vértice que serão gerados como saída ("out") pelo Vertex Shader.
 // ** Estes serão interpolados pelo rasterizador! ** gerando, assim, valores
 // para cada fragmento, os quais serão recebidos como entrada pelo Fragment
@@ -18,9 +31,10 @@ uniform mat4 projection;
 out vec4 position_world;
 out vec4 position_model;
 out vec4 normal;
-out vec2 texcoords;
 out mat3 tbn;
+out vec2 texcoords;
 out vec3 texcoords_skybox;
+out vec3 color_vert;
 
 // Variável utilizada para encaminharmos a informação de gl_InstanceID para o
 // fragment shader, caso necessário.
@@ -28,6 +42,13 @@ flat out int instanceID;
 
 #define SQUARE_SIZE (0.05789 * 1.5f)
 #define BOARD_START (-4 * SQUARE_SIZE)
+
+vec3 lambert_diffuse_gouraud(vec3 diffuse_light_color,
+                             vec4 normal,
+                             vec4 light_vec)
+{
+    return diffuse_light_color * max(0.0, dot(normal, light_vec));
+}
 
 void main()
 {
@@ -59,17 +80,6 @@ void main()
 
     gl_Position = projection * view * updated_model_matrix * model_coefficients;
 
-    // Como as variáveis acima  (tipo vec4) são vetores com 4 coeficientes,
-    // também é possível acessar e modificar cada coeficiente de maneira
-    // independente. Esses são indexados pelos nomes x, y, z, e w (nessa
-    // ordem, isto é, 'x' é o primeiro coeficiente, 'y' é o segundo, ...):
-    //
-    //     gl_Position.x = model_coefficients.x;
-    //     gl_Position.y = model_coefficients.y;
-    //     gl_Position.z = model_coefficients.z;
-    //     gl_Position.w = model_coefficients.w;
-    //
-
     // Agora definimos outros atributos dos vértices que serão interpolados pelo
     // rasterizador para gerar atributos únicos para cada fragmento gerado.
 
@@ -100,5 +110,21 @@ void main()
     vec4 origin = vec4(0.0, 0.0, 0.0, 1.0);
     vec4 camera_position = inverse(view) * origin;
     texcoords_skybox = (position_world - camera_position).xyz;
-}
 
+    vec3 diffuse_light_color = vec3(1.0,1.0,1.0);
+
+    vec4 light_pos = vec4(40.0,100.0,80.0,1.0);
+
+    // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
+    vec4 light_vec = normalize(light_pos - position_world);
+
+    color_vert = vec3(0.0);
+
+    switch (object_id) {
+        case PIECE:
+            switch (piece_color) {
+                case WHITE:
+                    color_vert = lambert_diffuse_gouraud(diffuse_light_color, normal, light_vec);
+            }
+    }
+}

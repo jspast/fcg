@@ -12,7 +12,11 @@ in vec4 position_model;
 
 in mat3 tbn;
 
+// Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
+in vec2 texcoords;
 in vec3 texcoords_skybox;
+
+in vec3 color_vert;
 
 flat in int instanceID;
 
@@ -49,9 +53,6 @@ uniform vec2 selected_square;
 
 uniform vec2 lastmove_start_square;
 uniform vec2 lastmove_end_square;
-
-// Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
-in vec2 texcoords;
 
 // Variáveis para acesso das imagens de textura
 uniform samplerCube SkyImage;
@@ -245,7 +246,7 @@ void main()
                     ambient_refl_color = surface_color * texture(WhitePiecesAmbient, texcoords).rgb;
                     specular_refl_color = vec3(0.0);
 
-                    color.a = 0.5;
+                    color.a = 0.8;
                     break;
 
                 case BLACK:
@@ -264,17 +265,22 @@ void main()
             break;
     }
 
-    // Termo difuso utilizando a lei dos cossenos de Lambert
-    vec3 diffuse_term = lambert_diffuse_term(diffuse_light_color, surface_color, norm, light_vec);
+    vec3 diffuse_term;
 
-    // Termo ambiente
+    // If vertex shader generated a color, use Gouraud Shading for diffuse illumination
+    if (color_vert != vec3(0.0)) {
+        diffuse_term = surface_color * color_vert;
+    }
+    else {
+        diffuse_term = lambert_diffuse_term(diffuse_light_color, surface_color, norm, light_vec);
+    }
+
     vec3 ambient_term_ = ambient_term(ambient_light_color, ambient_refl_color);
 
-    vec3 specular_term;
-    if (specular_refl_color == vec3(0.0))
-        specular_term = vec3(0.0);
-    else
-        // Termo especular utilizando o modelo de iluminação de Blinn-Phong
+    vec3 specular_term = vec3(0.0);
+
+    // If object has a reflection color, compute Blinn-Phong specular term
+    if (specular_refl_color != vec3(0.0))
         specular_term = blinn_phong_specular_term(specular_light_color, specular_refl_color, norm, light_vec, refl_vec, q);
 
     color.rgb = diffuse_term + ambient_term_ + specular_term;
