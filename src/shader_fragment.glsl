@@ -123,12 +123,21 @@ vec3 blinn_phong_specular_term(vec3 specular_light_color,
                                vec3 specular_refl_color,
                                vec4 normal,
                                vec4 light_vec,
-                               vec4 refl_vec,
+                               vec4 view_vec,
                                float q)
 {
-    vec4 half_vec = (refl_vec + light_vec) / length(refl_vec + light_vec);
+    vec4 half_vec = (view_vec + light_vec) / length(view_vec + light_vec);
 
     return specular_refl_color * specular_light_color * pow(dot(normal, half_vec), q);
+}
+
+vec3 glossy_reflection(vec4 refl_vec)
+{
+    vec3 glossy_vec = refl_vec.xyz;
+
+    glossy_vec.y = -abs(glossy_vec.y);
+
+    return glossy_vec;
 }
 
 ivec2 get_current_square()
@@ -187,7 +196,7 @@ void main()
     float q = 1.0;
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
-    vec4 v = normalize(camera_position - p);
+    vec4 view_vec = normalize(p - camera_position);
 
     switch (object_id) {
         case SKY:
@@ -212,11 +221,11 @@ void main()
             surface_color = texture(TableImage, texcoords).rgb;
             ambient_refl_color = surface_color * texture(TableAmbient, texcoords).rgb;
 
-            refl_vec = reflect(-v, norm);
-            specular_light_color = texture(SkyImage, refl_vec.xyz).rgb;
-            specular_refl_color = 0.2 * max(vec3(0.0), (1 - 12 * texture(TableRoughness, texcoords).rgb));
+            refl_vec = reflect(view_vec, norm);
+            specular_light_color = texture(SkyImage, glossy_reflection(refl_vec)).rgb;
+            specular_refl_color = max(vec3(0.0), (1 - 10 * texture(TableRoughness, texcoords).rgb));
 
-            q = 4.0;
+            q = 6.0;
             break;
 
         case BOARD:
@@ -226,11 +235,11 @@ void main()
             surface_color = texture(BoardImage, texcoords).rgb;
             ambient_refl_color = surface_color * texture(BoardAmbient, texcoords).rgb;
 
-            refl_vec = reflect(-v, norm);
+            refl_vec = reflect(view_vec, norm);
             specular_light_color = texture(SkyImage, refl_vec.xyz).rgb;
-            specular_refl_color = 0.2 * (1 - texture(BoardRoughness, texcoords).rgb);
+            specular_refl_color = 0.1 * (1 - texture(BoardRoughness, texcoords).rgb);
 
-            q = 6.0;
+            q = 200.0;
 
             if (get_current_square() == selecting_square) {
                 surface_color *= 0.1;
@@ -250,13 +259,12 @@ void main()
                     break;
 
                 case BLACK:
-                    norm = texture(BlackPiecesNormal, texcoords) * 2.0 - 0.5;
-                    norm = vec4(normalize(tbn * norm.xyz), 0.0);
+                    norm = normalize(normal);
 
                     surface_color = texture(BlackPiecesImage, texcoords).rgb;
                     ambient_refl_color = surface_color * texture(BlackPiecesAmbient, texcoords).rgb;
 
-                    refl_vec = reflect(-v, norm);
+                    refl_vec = reflect(view_vec, norm);
                     specular_light_color = texture(SkyImage, refl_vec.xyz).rgb;
                     specular_refl_color = 0.1 * (1 - texture(BlackPiecesRoughness, texcoords).rgb);
                     q = 6.0;
@@ -281,7 +289,7 @@ void main()
 
     // If object has a reflection color, compute Blinn-Phong specular term
     if (specular_refl_color != vec3(0.0))
-        specular_term = blinn_phong_specular_term(specular_light_color, specular_refl_color, norm, light_vec, refl_vec, q);
+        specular_term = blinn_phong_specular_term(specular_light_color, specular_refl_color, norm, light_vec, -view_vec, q);
 
     color.rgb = diffuse_term + ambient_term_ + specular_term;
 
