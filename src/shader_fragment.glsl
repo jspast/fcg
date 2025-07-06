@@ -60,7 +60,6 @@ uniform samplerCube SkyImage;
 uniform sampler2D FloorNormal;
 uniform sampler2D FloorImage;
 uniform sampler2D FloorAmbient;
-uniform sampler2D FloorRoughness;
 
 uniform sampler2D TableNormal;
 uniform sampler2D TableImage;
@@ -72,15 +71,11 @@ uniform sampler2D BoardImage;
 uniform sampler2D BoardAmbient;
 uniform sampler2D BoardRoughness;
 
-uniform sampler2D WhitePiecesNormal;
 uniform sampler2D WhitePiecesImage;
 uniform sampler2D WhitePiecesAmbient;
-uniform sampler2D WhitePiecesRoughness;
 
-uniform sampler2D BlackPiecesNormal;
 uniform sampler2D BlackPiecesImage;
 uniform sampler2D BlackPiecesAmbient;
-uniform sampler2D BlackPiecesRoughness;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -223,7 +218,7 @@ void main()
 
             refl_vec = reflect(view_vec, norm);
             specular_light_color = texture(SkyImage, glossy_reflection(refl_vec)).rgb;
-            specular_refl_color = max(vec3(0.0), (1 - 10 * texture(TableRoughness, texcoords).rgb));
+            specular_refl_color = max(vec3(0.0), (1 - 4 * gain(texture(TableRoughness, texcoords).r, 0.5)));
 
             q = 6.0;
             break;
@@ -266,7 +261,7 @@ void main()
 
                     refl_vec = reflect(view_vec, norm);
                     specular_light_color = texture(SkyImage, refl_vec.xyz).rgb;
-                    specular_refl_color = 0.1 * (1 - texture(BlackPiecesRoughness, texcoords).rgb);
+                    specular_refl_color = vec3(0.1);
                     q = 6.0;
                     break;
             }

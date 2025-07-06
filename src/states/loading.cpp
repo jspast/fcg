@@ -20,7 +20,6 @@ void LoadingState::load()
     gpu_program->load_textures_async({
         {"../../data/textures/floor/diffuse_high.jpg", "FloorImage"},
         {"../../data/textures/floor/ambient_high.jpg", "FloorAmbient"},
-        {"../../data/textures/floor/roughness_high.jpg", "FloorRoughness"},
         {"../../data/textures/floor/normal_high.jpg", "FloorNormal"},
 
         {"../../data/textures/table/diffuse_high.jpg", "TableImage"},
@@ -35,13 +34,9 @@ void LoadingState::load()
 
         {"../../data/textures/black_pieces/diffuse_high.jpg", "BlackPiecesImage"},
         {"../../data/textures/black_pieces/ambient_high.jpg", "BlackPiecesAmbient"},
-        {"../../data/textures/black_pieces/roughness_high.jpg", "BlackPiecesRoughness"},
-        {"../../data/textures/black_pieces/normal_high.jpg", "BlackPiecesNormal"},
 
         {"../../data/textures/white_pieces/diffuse_high.jpg", "WhitePiecesImage"},
         {"../../data/textures/white_pieces/ambient_high.jpg", "WhitePiecesAmbient"},
-        {"../../data/textures/white_pieces/roughness_high.jpg", "WhitePiecesRoughness"},
-        {"../../data/textures/white_pieces/normal_high.jpg", "WhitePiecesNormal"}
     });
 }
 
