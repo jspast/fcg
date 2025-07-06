@@ -9,12 +9,12 @@
 
 void LoadingState::load()
 {
-    gpu_program->load_cubemap_from_hdr_files({"../../data/textures/sky/px.hdr",
-                                              "../../data/textures/sky/nx.hdr",
-                                              "../../data/textures/sky/py.hdr",
-                                              "../../data/textures/sky/ny.hdr",
-                                              "../../data/textures/sky/pz.hdr",
-                                              "../../data/textures/sky/nz.hdr"},
+    gpu_program->load_cubemap_from_hdr_files({"../../data/textures/sky/px_high.hdr",
+                                              "../../data/textures/sky/nx_high.hdr",
+                                              "../../data/textures/sky/py_high.hdr",
+                                              "../../data/textures/sky/ny_high.hdr",
+                                              "../../data/textures/sky/pz_high.hdr",
+                                              "../../data/textures/sky/nz_high.hdr"},
                                              "SkyImage");
 
     gpu_program->load_textures_async({

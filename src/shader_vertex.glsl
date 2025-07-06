@@ -113,7 +113,7 @@ void main()
 
     vec3 diffuse_light_color = vec3(1.0,1.0,1.0);
 
-    vec4 light_pos = vec4(40.0,100.0,80.0,1.0);
+    vec4 light_pos = vec4(70.0,100.0,71.0,1.0);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
     vec4 light_vec = normalize(light_pos - position_world);
