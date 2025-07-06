@@ -151,13 +151,13 @@ void ObjModel::build_triangles()
                 model_coefficients.push_back( pos[i].z ); // Z
                 model_coefficients.push_back( 1.0f ); // W
 
-                aabb.min_x = std::min(aabb.min_x, pos[i].x);
-                aabb.min_y = std::min(aabb.min_y, pos[i].y);
-                aabb.min_z = std::min(aabb.min_z, pos[i].z);
+                aabb.min.x = std::min(aabb.min.x, pos[i].x);
+                aabb.min.y = std::min(aabb.min.y, pos[i].y);
+                aabb.min.z = std::min(aabb.min.z, pos[i].z);
 
-                aabb.max_x = std::max(aabb.max_x, pos[i].x);
-                aabb.max_y = std::max(aabb.max_y, pos[i].y);
-                aabb.max_z = std::max(aabb.max_z, pos[i].z);
+                aabb.max.x = std::max(aabb.max.x, pos[i].x);
+                aabb.max.y = std::max(aabb.max.y, pos[i].y);
+                aabb.max.z = std::max(aabb.max.z, pos[i].z);
             }
 
             // Vertex normals

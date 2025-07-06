@@ -2,7 +2,9 @@
 #include <glm/vec2.hpp>
 #include <glm/mat4x4.hpp>
 
+#include "camera.hpp"
 #include "matrices.hpp"
+#include "collisions.hpp"
 
 // Método baseado em: https://antongerdelan.net/opengl/raycasting.html
 glm::vec4 cursor_to_ray(glm::vec2 cursor_pos,
@@ -39,4 +41,80 @@ glm::vec4 ray_plane_intersection(glm::vec4 ray_position,
     float t = dotproduct((c - a), n) / dotproduct(ray_direction, n);
 
     return a + t * ray_direction;
+}
+
+// For the following functions, "pos" considered the center of the object
+
+// Returns the ammount of sphere_mov that can happen before a collision
+// Examples:
+// 1.0 -> No collision in the movement, can happen integrally
+// 0.5 -> Collision in the exact middle of the movement, can only do half
+// 0.0 -> Collision on movement start
+float sphere_aabbs_intersection_with_movement(glm::vec4 sphere_pos,
+                                              float sphere_radius,
+                                              glm::vec4 sphere_mov,
+                                              const std::vector<std::pair<glm::vec4, AABB>>& aabbs)
+{
+    glm::vec3 end_pos = glm::vec3(sphere_pos) + glm::vec3(sphere_mov);
+
+    float move_ammount = 1.0f;
+
+    for (const auto& [aabb_pos, aabb] : aabbs) {
+        glm::vec3 aabb_min = aabb.min + glm::vec3(aabb_pos) - glm::vec3(sphere_radius);
+        glm::vec3 aabb_max = aabb.max + glm::vec3(aabb_pos) + glm::vec3(sphere_radius);
+
+        // Allow movement if it ends outside aabb
+        // Avoids getting stuck
+        if (end_pos.x < aabb_min.x || end_pos.x > aabb_max.x ||
+            end_pos.y < aabb_min.y || end_pos.y > aabb_max.y ||
+            end_pos.z < aabb_min.z || end_pos.z > aabb_max.z) {
+            continue;
+        }
+
+        float tmin = 0.0f;
+        bool hit = true;
+
+        for (int i = 0; i < 3; i++) {
+            // Avoid division by zero
+            if (glm::abs(sphere_mov[i]) < EPSILON) {
+                if (sphere_pos[i] < aabb_min[i] || sphere_pos[i] > aabb_max[i]) {
+                    hit = false;
+                    break;
+                }
+            }
+            else {
+                float inv_dir = 1.0f / sphere_mov[i];
+                // Test both min and max limits
+                float t1 = (aabb_min[i] - sphere_pos[i]) * inv_dir;
+                float t2 = (aabb_max[i] - sphere_pos[i]) * inv_dir;
+
+                tmin = glm::max(tmin, glm::min(t1, t2));
+            }
+        }
+
+        if (hit && tmin < move_ammount) {
+            move_ammount = tmin;
+        }
+    }
+
+    return glm::clamp(move_ammount, 0.0f, 1.0f);
+}
+
+bool aabb_aabb_intersection(glm::vec4 pos1,
+                            AABB aabb1,
+                            glm::vec4 pos2,
+                            AABB aabb2)
+{
+    glm::vec<3, bool> collision;
+
+    collision.x = pos1.x - aabb1.min.x / 2.0f <= pos2.x + aabb2.max.x / 2.0f &&
+                  pos1.x + aabb1.max.x / 2.0f >= pos2.x - aabb2.min.x / 2.0f;
+
+    collision.y = pos1.y - aabb1.min.y / 2.0f <= pos2.y + aabb2.max.y / 2.0f &&
+                  pos1.y + aabb1.max.y / 2.0f >= pos2.y - aabb2.min.y / 2.0f;
+
+    collision.z = pos1.z - aabb1.min.z / 2.0f <= pos2.z + aabb2.max.z / 2.0f &&
+                  pos1.z + aabb1.max.z / 2.0f >= pos2.z - aabb2.min.z / 2.0f;
+
+    return collision.x && collision.y && collision.z;
 }

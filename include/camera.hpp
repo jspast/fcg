@@ -144,14 +144,14 @@ class LookAtCamera: public Camera {
 // An implementation of a free camera
 class FreeCamera: public Camera {
     protected:
+        void update();
+
+    public:
         // Vectors used to define the camera direction
         glm::vec4 w_vector = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
         glm::vec4 u_vector = crossproduct(up_vector, w_vector) / norm(crossproduct(up_vector, w_vector));
         glm::vec4 v_vector = crossproduct(w_vector, u_vector);
 
-        void update();
-
-    public:
         glm::vec4 get_view_vector();
 
         // Moves the camera relative to the view_vector

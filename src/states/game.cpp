@@ -104,7 +104,7 @@ void GameplayState::load()
     king->set_uniform("piece_color", PIECE_WHITE);
 
     floor->set_transform(Matrix_Scale(100.0f, 1.0f, 100.0f));
-    board->set_transform(Matrix_Translate(0.0f, table->model->aabb.max_y, 0.0f) *
+    board->set_transform(Matrix_Translate(0.0f, table->model->aabb.max.y, 0.0f) *
                          Matrix_Scale(1.5f, 1.5f, 1.5f));
 
     pawn->set_transform(Matrix_Translate(BOARD_START + SQUARE_SIZE / 2.0, 0.0f, BOARD_START + SQUARE_SIZE / 2.0));
@@ -113,6 +113,12 @@ void GameplayState::load()
     board->set_uniform("selecting_square", glm::vec2(0, 0));
 
     pawn->set_instances(8);
+
+    aabbs = {
+        std::pair(glm::vec4(0.0), floor_model->aabb * 100.0f),
+        std::pair(glm::vec4(0.0), table_model->aabb),
+        std::pair(glm::vec4(0.0, table_model->aabb.max.y, 0.0, 0.0), board_model->aabb * 1.5f)
+    };
 
     board->add_child(pawn);
     board->add_child(king);
@@ -145,7 +151,7 @@ void GameplayState::update(float delta_t)
                                       camera->get_view_matrix());
 
         col = ray_plane_intersection(camera->get_position(), ray,
-            glm::vec4(0, table_model->aabb.max_y + board_model->aabb.max_y * 1.5f, 0, 1),
+            glm::vec4(0, table_model->aabb.max.y + board_model->aabb.max.y * 1.5f, 0, 1),
             glm::vec4(0, 1, 0, 0));
 
         if (col.x > G_BOARD_START &&
@@ -218,17 +224,35 @@ void GameplayState::update(float delta_t)
     if (game_input->get_is_key_pressed(GLFW_KEY_O))
         camera->toggle_perspective_projection(false);
 
-    if (game_input->get_is_key_down(GLFW_KEY_W))
-        free_camera->move(0.5f * delta_t, 0.0f);
+    if (game_input->get_is_key_down(GLFW_KEY_W) ||
+        game_input->get_is_key_down(GLFW_KEY_A) ||
+        game_input->get_is_key_down(GLFW_KEY_S) ||
+        game_input->get_is_key_down(GLFW_KEY_D))
+    {
+        float front_movement = 0.0f;
+        float left_movement = 0.0f;
 
-    if (game_input->get_is_key_down(GLFW_KEY_S))
-        free_camera->move(-0.5f * delta_t, 0.0f);
+        if (game_input->get_is_key_down(GLFW_KEY_W))
+            front_movement += 0.5f * delta_t;
 
-    if (game_input->get_is_key_down(GLFW_KEY_A))
-        free_camera->move(0.0f, 0.5f * delta_t);
+        if (game_input->get_is_key_down(GLFW_KEY_S))
+            front_movement -= 0.5f * delta_t;
 
-    if (game_input->get_is_key_down(GLFW_KEY_D))
-        free_camera->move(0.0f, -0.5f * delta_t);
+        if (game_input->get_is_key_down(GLFW_KEY_A))
+            left_movement += 0.5f * delta_t;
+
+        if (game_input->get_is_key_down(GLFW_KEY_D))
+            left_movement -= 0.5f * delta_t;
+
+        float factor = sphere_aabbs_intersection_with_movement(
+            camera->get_position(),
+            camera->get_nearplane_distance() * 2.0f,
+            free_camera->w_vector * front_movement +
+            free_camera->u_vector * left_movement,
+            aabbs);
+
+        free_camera->move(front_movement * factor, left_movement * factor);
+    }
 
     // Atualizamos parâmetros da câmera com os deslocamentos
     glm::vec2 cursor_movement = game_input->get_cursor_movement();

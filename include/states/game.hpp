@@ -3,7 +3,9 @@
 #include <memory>
 
 #include <chess.hpp>
+#include <utility>
 
+#include <glm/vec4.hpp>
 #include "object.hpp"
 #include "chess_game.hpp"
 #include "camera.hpp"
@@ -54,4 +56,6 @@ class GameplayState: public GameState {
         std::shared_ptr<Object> knight;
         std::shared_ptr<Object> queen;
         std::shared_ptr<Object> bishop;
+
+        std::vector<std::pair<glm::vec4, AABB>> aabbs;
 };
