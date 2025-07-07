@@ -303,7 +303,7 @@ void GpuProgram::load_textures_async(std::vector<std::pair<std::string_view, std
         tex_futures.emplace_back(std::async(std::launch::async, [filepath, uniform]() {
 
             int w, h, c;
-            unsigned char* data = stbi_load(filepath.data(), &w, &h, &c, 3);
+            unsigned char* data = stbi_load(filepath.data(), &w, &h, &c, 0);
 
             if (!data)
                 throw std::runtime_error( "ERROR: Cannot open image file \"" + std::string(filepath) + "\".");
@@ -314,7 +314,7 @@ void GpuProgram::load_textures_async(std::vector<std::pair<std::string_view, std
             result.uniform_name = uniform;
             result.width = w;
             result.height = h;
-            result.channels = 3;
+            result.channels = c;
             result.data = data;
             return result;
         }));
@@ -361,7 +361,11 @@ bool GpuProgram::upload_pending_textures()
         GLuint textureunit = num_uploaded_textures;
         glActiveTexture(GL_TEXTURE0 + textureunit);
         glBindTexture(GL_TEXTURE_2D, texture_id);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, tex.width, tex.height, 0, GL_RGB, GL_UNSIGNED_BYTE, tex.data);
+        glTexImage2D(GL_TEXTURE_2D, 0,
+                     (tex.channels > 1) ? GL_SRGB8 : GL_R8,
+                     tex.width, tex.height, 0,
+                     (tex.channels > 1) ? GL_RGB : GL_RED,
+                     GL_UNSIGNED_BYTE, tex.data);
         glGenerateMipmap(GL_TEXTURE_2D);
         glBindSampler(textureunit, sampler_id);
 

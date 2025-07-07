@@ -205,7 +205,7 @@ void main()
             norm = vec4(normalize(tbn * norm.xyz), 0.0);
 
             surface_color = texture(FloorImage, 50 * texcoords).rgb;
-            ambient_refl_color = surface_color * texture(FloorAmbient, 50 * texcoords).rgb;
+            ambient_refl_color = surface_color * texture(FloorAmbient, 50 * texcoords).r;
             specular_refl_color = vec3(0.0);
             break;
 
@@ -214,11 +214,11 @@ void main()
             norm = vec4(normalize(tbn * norm.xyz), 0.0);
 
             surface_color = texture(TableImage, texcoords).rgb;
-            ambient_refl_color = surface_color * texture(TableAmbient, texcoords).rgb;
+            ambient_refl_color = surface_color * texture(TableAmbient, texcoords).r;
 
             refl_vec = reflect(view_vec, norm);
             specular_light_color = texture(SkyImage, glossy_reflection(refl_vec)).rgb;
-            specular_refl_color = max(vec3(0.0), (1 - 4 * gain(texture(TableRoughness, texcoords).r, 0.5)));
+            specular_refl_color = vec3(max(0.0, (1 - 2.2 * gain(texture(TableRoughness, texcoords).r, 0.5))));
 
             q = 15.0;
             break;
@@ -228,11 +228,11 @@ void main()
             norm = vec4(normalize(tbn * norm.xyz), 0.0);
 
             surface_color = texture(BoardImage, texcoords).rgb;
-            ambient_refl_color = surface_color * texture(BoardAmbient, texcoords).rgb;
+            ambient_refl_color = surface_color * texture(BoardAmbient, texcoords).r;
 
             refl_vec = reflect(view_vec, norm);
             specular_light_color = texture(SkyImage, refl_vec.xyz).rgb;
-            specular_refl_color = 0.05 * (1 - texture(BoardRoughness, texcoords).rgb);
+            specular_refl_color = vec3(0.05 * (1 - texture(BoardRoughness, texcoords).r));
 
             q = 60.0;
 
@@ -252,7 +252,7 @@ void main()
             switch (piece_color) {
                 case WHITE:
                     surface_color = texture(WhitePiecesImage, texcoords).rgb;
-                    ambient_refl_color = surface_color * texture(WhitePiecesAmbient, texcoords).rgb;
+                    ambient_refl_color = surface_color * texture(WhitePiecesAmbient, texcoords).r;
                     specular_refl_color = vec3(0.0);
 
                     color.a = 1.0;
@@ -262,7 +262,7 @@ void main()
                     norm = normalize(normal);
 
                     surface_color = texture(BlackPiecesImage, texcoords).rgb;
-                    ambient_refl_color = surface_color * texture(BlackPiecesAmbient, texcoords).rgb;
+                    ambient_refl_color = surface_color * texture(BlackPiecesAmbient, texcoords).r;
 
                     refl_vec = reflect(view_vec, norm);
                     specular_light_color = texture(SkyImage, refl_vec.xyz).rgb;
