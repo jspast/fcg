@@ -241,6 +241,11 @@ void main()
                 surface_color += 0.1;
                 surface_color.g += 0.8;
             }
+            if (get_current_square() == selected_square) {
+                surface_color *= 0.1;
+                surface_color += 0.1;
+                surface_color.b += 0.8;
+            }
             break;
 
         case PIECE:
@@ -250,7 +255,7 @@ void main()
                     ambient_refl_color = surface_color * texture(WhitePiecesAmbient, texcoords).rgb;
                     specular_refl_color = vec3(0.0);
 
-                    color.a = 0.8;
+                    color.a = 1.0;
                     break;
 
                 case BLACK:

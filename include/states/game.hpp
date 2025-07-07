@@ -50,12 +50,18 @@ class GameplayState: public GameState {
         std::shared_ptr<Object> table;
         std::shared_ptr<Object> board;
 
-        std::shared_ptr<Object> pawn;
-        std::shared_ptr<Object> king;
-        std::shared_ptr<Object> rook;
-        std::shared_ptr<Object> knight;
-        std::shared_ptr<Object> queen;
-        std::shared_ptr<Object> bishop;
+        std::shared_ptr<Object> white_pawn;
+        std::shared_ptr<Object> white_king;
+        std::shared_ptr<Object> white_rook;
+        std::shared_ptr<Object> white_knight;
+        std::shared_ptr<Object> white_queen;
+        std::shared_ptr<Object> white_bishop;
+        std::shared_ptr<Object> black_pawn;
+        std::shared_ptr<Object> black_king;
+        std::shared_ptr<Object> black_rook;
+        std::shared_ptr<Object> black_knight;
+        std::shared_ptr<Object> black_queen;
+        std::shared_ptr<Object> black_bishop;
 
         std::vector<std::pair<glm::vec4, AABB>> aabbs;
 };

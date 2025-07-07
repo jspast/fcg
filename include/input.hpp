@@ -25,6 +25,7 @@ class InputManager {
         bool get_is_mouse_button_down(int button);
         bool get_is_key_pressed(int key);
         bool get_is_mouse_button_pressed(int button);
+        bool get_is_mouse_button_released(int button);
 
         glm::vec2 get_cursor_position();
         glm::vec2 get_cursor_movement();

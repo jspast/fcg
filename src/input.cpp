@@ -93,6 +93,12 @@ bool InputManager::get_is_mouse_button_pressed(int button)
            mouse_buttons[button] != last_mouse_buttons[button];
 }
 
+bool InputManager::get_is_mouse_button_released(int button)
+{
+    return !get_is_mouse_button_down(button) &&
+           mouse_buttons[button] != last_mouse_buttons[button];
+}
+
 void InputManager::update()
 {
     gamepad_state_is_updated.fill(false);

@@ -30,7 +30,7 @@ class ObjModel {
         void compute_normals();
 
         void build_triangles();
-        void draw(GpuProgram& gpu_program, size_t num_instances = 1);
+        void draw(GpuProgram& gpu_program);
 
         void print_info();
 
@@ -48,9 +48,9 @@ class Object {
 
         void add_child(std::shared_ptr<Object> child);
 
-        void set_instances(size_t num_instances);
+        void add_instance(glm::mat4 transform);
 
-        void set_transform(glm::mat4 transform);
+        void set_transform(int instance_id, glm::mat4 transform);
 
         void set_uniform(std::string_view name, UniformValue value);
         void apply_uniforms();
@@ -61,8 +61,8 @@ class Object {
         std::unordered_map<std::string, UniformValue> uniforms;
         GpuProgram& gpu_program;
 
-        glm::mat4 transform = Matrix_Identity();
-        size_t num_instances = 1;
+        std::vector<glm::mat4> transforms;
+        size_t num_instances = 0;
 
         std::vector<std::shared_ptr<Object>> children;
 };

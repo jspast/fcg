@@ -286,15 +286,12 @@ void ObjModel::build_triangles()
     glBindVertexArray(0);
 }
 
-void ObjModel::draw(GpuProgram& gpu_program, size_t num_instances)
+void ObjModel::draw(GpuProgram& gpu_program)
 {
     glUseProgram(gpu_program.id);
     glBindVertexArray(vao_id);
 
-    if (num_instances == 1)
-        glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_INT, 0);
-    else
-        glDrawElementsInstanced(GL_TRIANGLES, num_indices, GL_UNSIGNED_INT, 0, num_instances);
+    glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_INT, 0);
 
     glBindVertexArray(0);
     glUseProgram(0);
@@ -468,19 +465,23 @@ void ObjModel::print_info()
 Object::Object(std::shared_ptr<ObjModel> m, GpuProgram& gpu) : gpu_program(gpu)
 {
     model = m;
+    add_instance(Matrix_Identity());
 }
 
 void Object::draw(const glm::mat4 parent_transform)
 {
-    glm::mat4 t = parent_transform * transform;
+    glm::mat4 t = parent_transform;
+    for (size_t i=0; i<num_instances; i++) {
+        t = parent_transform * transforms[i];
 
-    apply_uniforms();
+        apply_uniforms();
 
-    // Always set model matrix
-    gpu_program.set_uniform("model", t);
+        // Always set model matrix
+        gpu_program.set_uniform("model", t);
 
-    model->draw(gpu_program, num_instances);
-
+        model->draw(gpu_program);
+    }
+    
     for (auto& child : children) {
         child->draw(t);
     }
@@ -491,14 +492,15 @@ void Object::add_child(std::shared_ptr<Object> child)
     children.push_back(child);
 }
 
-void Object::set_instances(size_t n)
+void Object::add_instance(glm::mat4 t)
 {
-    num_instances = n;
+    transforms.push_back(t);
+    num_instances += 1;
 }
 
-void Object::set_transform(glm::mat4 t)
+void Object::set_transform(int instance_id, glm::mat4 t)
 {
-    transform = t;
+    transforms[instance_id] = t;
 }
 
 void Object::set_uniform(std::string_view name, UniformValue value)

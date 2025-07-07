@@ -59,7 +59,9 @@ void GameplayState::load()
             GLFW_KEY_F3,
             GLFW_KEY_ESCAPE
         },
-        std::vector<int> {},
+        std::vector<int> {
+            GLFW_MOUSE_BUTTON_LEFT
+        },
         std::set<int> {
             GLFW_GAMEPAD_BUTTON_START
         },
@@ -86,33 +88,88 @@ void GameplayState::load()
     table  = std::make_shared<Object>(table_model,  *gpu_program);
     board  = std::make_shared<Object>(board_model,  *gpu_program);
 
-    pawn   = std::make_shared<Object>(pawn_model,   *gpu_program);
-    king   = std::make_shared<Object>(king_model,   *gpu_program);
-    rook   = std::make_shared<Object>(rook_model,   *gpu_program);
-    knight = std::make_shared<Object>(knight_model, *gpu_program);
-    queen  = std::make_shared<Object>(queen_model,  *gpu_program);
-    bishop = std::make_shared<Object>(bishop_model, *gpu_program);
+    // Os Objects compartilham uniforms, podendo ter múltiplas instâncias 
+    // criadas através de múltiplas matrizes de transformação
+    white_pawn   = std::make_shared<Object>(pawn_model,   *gpu_program);
+    white_king   = std::make_shared<Object>(king_model,   *gpu_program);
+    white_rook   = std::make_shared<Object>(rook_model,   *gpu_program);
+    white_knight = std::make_shared<Object>(knight_model, *gpu_program);
+    white_queen  = std::make_shared<Object>(queen_model,  *gpu_program);
+    white_bishop = std::make_shared<Object>(bishop_model, *gpu_program);
+    black_pawn   = std::make_shared<Object>(pawn_model,   *gpu_program);
+    black_king   = std::make_shared<Object>(king_model,   *gpu_program);
+    black_rook   = std::make_shared<Object>(rook_model,   *gpu_program);
+    black_knight = std::make_shared<Object>(knight_model, *gpu_program);
+    black_queen  = std::make_shared<Object>(queen_model,  *gpu_program);
+    black_bishop = std::make_shared<Object>(bishop_model, *gpu_program);
 
     sky->set_uniform("object_id", SKY);
     floor->set_uniform("object_id", FLOOR);
     table->set_uniform("object_id", TABLE);
     board->set_uniform("object_id", BOARD);
 
-    pawn->set_uniform("object_id", PIECE);
-    pawn->set_uniform("piece_color", PIECE_BLACK);
-    king->set_uniform("object_id", PIECE);
-    king->set_uniform("piece_color", PIECE_WHITE);
+    white_pawn->set_uniform("object_id", PIECE);
+    white_pawn->set_uniform("piece_color", PIECE_WHITE);
+    white_king->set_uniform("object_id", PIECE);
+    white_king->set_uniform("piece_color", PIECE_WHITE);
+    white_rook->set_uniform("object_id", PIECE);
+    white_rook->set_uniform("piece_color", PIECE_WHITE);
+    white_knight->set_uniform("object_id", PIECE);
+    white_knight->set_uniform("piece_color", PIECE_WHITE);
+    white_queen->set_uniform("object_id", PIECE);
+    white_queen->set_uniform("piece_color", PIECE_WHITE);
+    white_bishop->set_uniform("object_id", PIECE);
+    white_bishop->set_uniform("piece_color", PIECE_WHITE);
+    black_pawn->set_uniform("object_id", PIECE);
+    black_pawn->set_uniform("piece_color", PIECE_BLACK);
+    black_king->set_uniform("object_id", PIECE);
+    black_king->set_uniform("piece_color", PIECE_BLACK);
+    black_rook->set_uniform("object_id", PIECE);
+    black_rook->set_uniform("piece_color", PIECE_BLACK);
+    black_knight->set_uniform("object_id", PIECE);
+    black_knight->set_uniform("piece_color", PIECE_BLACK);
+    black_queen->set_uniform("object_id", PIECE);
+    black_queen->set_uniform("piece_color", PIECE_BLACK);
+    black_bishop->set_uniform("object_id", PIECE);
+    black_bishop->set_uniform("piece_color", PIECE_BLACK);
 
-    floor->set_transform(Matrix_Scale(100.0f, 1.0f, 100.0f));
-    board->set_transform(Matrix_Translate(0.0f, table->model->aabb.max.y, 0.0f) *
+    // Definimos as posições dos objetos
+    floor->set_transform(0, Matrix_Scale(100.0f, 1.0f, 100.0f));
+    board->set_transform(0, Matrix_Translate(0.0f, table->model->aabb.max.y, 0.0f) *
                          Matrix_Scale(1.5f, 1.5f, 1.5f));
 
-    pawn->set_transform(Matrix_Translate(BOARD_START + SQUARE_SIZE / 2.0, 0.0f, BOARD_START + SQUARE_SIZE / 2.0));
-    king->set_transform(Matrix_Translate(-BOARD_START - SQUARE_SIZE / 2.0, 0.0f, -BOARD_START - SQUARE_SIZE / 2.0));
+    // Definimos as instâncias e as posições iniciais das peças
+    float board_left = BOARD_START + SQUARE_SIZE / 2.0;
+    float board_top = BOARD_START + SQUARE_SIZE / 2.0;
+    float board_bottom = -BOARD_START - SQUARE_SIZE / 2.0;
+    
+    white_king->set_transform(0, Matrix_Translate(board_left + SQUARE_SIZE*3, 0.0f, board_top));
+    white_queen->set_transform(0, Matrix_Translate(board_left + SQUARE_SIZE*4, 0.0f, board_top));
+    white_rook->set_transform(0, Matrix_Translate(board_left, 0.0f, board_top));
+    white_rook->add_instance(Matrix_Translate(board_left + SQUARE_SIZE*7, 0.0f, board_top));
+    white_knight->set_transform(0, Matrix_Translate(board_left + SQUARE_SIZE*1, 0.0f, board_top) * Matrix_Rotate_Y(M_PI));
+    white_knight->add_instance(Matrix_Translate(board_left + SQUARE_SIZE*6, 0.0f, board_top) * Matrix_Rotate_Y(M_PI));
+    white_bishop->set_transform(0, Matrix_Translate(board_left + SQUARE_SIZE*2, 0.0f, board_top));
+    white_bishop->add_instance(Matrix_Translate(board_left + SQUARE_SIZE*5, 0.0f, board_top));
+    white_pawn->set_transform(0, Matrix_Translate(board_left, 0.0f, board_top + SQUARE_SIZE));
+    for (int i=1; i<8; i++) {
+        white_pawn->add_instance(Matrix_Translate(board_left + SQUARE_SIZE*i, 0.0f, board_top + SQUARE_SIZE));
+    }
+
+    black_king->set_transform(0, Matrix_Translate(board_left + SQUARE_SIZE*3, 0.0f, board_bottom));
+    black_queen->set_transform(0, Matrix_Translate(board_left + SQUARE_SIZE*4, 0.0f, board_bottom));
+    black_rook->set_transform(0, Matrix_Translate(board_left, 0.0f, board_bottom));
+    black_rook->add_instance(Matrix_Translate(board_left + SQUARE_SIZE*7, 0.0f, board_bottom));
+    black_knight->set_transform(0, Matrix_Translate(board_left + SQUARE_SIZE*1, 0.0f, board_bottom));
+    black_knight->add_instance(Matrix_Translate(board_left + SQUARE_SIZE*6, 0.0f, board_bottom));
+    black_bishop->set_transform(0, Matrix_Translate(board_left + SQUARE_SIZE*2, 0.0f, board_bottom));
+    black_bishop->add_instance(Matrix_Translate(board_left + SQUARE_SIZE*5, 0.0f, board_bottom));
+    black_pawn->set_transform(0, Matrix_Translate(board_left, 0.0f, board_bottom - SQUARE_SIZE));
+    for (int i=1; i<8; i++) {
+        black_pawn->add_instance(Matrix_Translate(board_left + SQUARE_SIZE*i, 0.0f, board_bottom - SQUARE_SIZE));
+    }
 
     board->set_uniform("selecting_square", glm::vec2(0, 0));
-
-    pawn->set_instances(8);
 
     aabbs = {
         std::pair(glm::vec4(0.0), floor_model->aabb * 100.0f),
@@ -120,8 +177,18 @@ void GameplayState::load()
         std::pair(glm::vec4(0.0, table_model->aabb.max.y, 0.0, 0.0), board_model->aabb * 1.5f)
     };
 
-    board->add_child(pawn);
-    board->add_child(king);
+    board->add_child(white_pawn);
+    board->add_child(white_king);
+    board->add_child(white_rook);
+    board->add_child(white_knight);
+    board->add_child(white_queen);
+    board->add_child(white_bishop);
+    board->add_child(black_pawn);
+    board->add_child(black_king);
+    board->add_child(black_rook);
+    board->add_child(black_knight);
+    board->add_child(black_queen);
+    board->add_child(black_bishop);
     table->add_child(board);
 
     // Enable Z-buffer
@@ -143,7 +210,11 @@ void GameplayState::update(float delta_t)
 {
     glm::vec4 col;
 
-    if (!game_input->get_is_enabled()) {
+    // PASSO 1: atualizações sob demanda
+
+    // Identifica a casa apontada, enquanto não há uma animação em progresso
+    if (!game_input->get_is_enabled() && 
+        chess_game->current_state != ChessGame::IngameState::ONGOING_MOVE) {
 
         glm::vec4 ray = cursor_to_ray(input->get_cursor_position(),
                                       window->get_size(),
@@ -166,9 +237,17 @@ void GameplayState::update(float delta_t)
 
             chess_game->selecting_square = new_square;
             board->set_uniform("selecting_square", glm::vec2(file, rank));
+
+            // Identifica se a casa apontada foi selecionada com o mouse
+            if (input->get_is_mouse_button_released(GLFW_MOUSE_BUTTON_LEFT)) {
+                chess_game->selected_square = new_square;
+                board->set_uniform("selected_square", glm::vec2(file, rank));
+            }
         }
     }
 
+    // Alterna entre estado de manipulação da câmera e estado de 
+    // seleção de casa através da tecla ESC
     if (input->get_is_key_pressed(GLFW_KEY_ESCAPE) ||
         input->get_is_gamepad_button_pressed(GLFW_JOYSTICK_1, GLFW_GAMEPAD_BUTTON_START))
     {
@@ -176,48 +255,72 @@ void GameplayState::update(float delta_t)
         window->toggle_cursor();
     }
 
+    // Exibe ou oculta informações de depuração
     if (input->get_is_key_pressed(GLFW_KEY_F3))
         hud->toggle_debug_info();
-
+    
+    // Troca o tipo de câmera
     if (game_input->get_is_key_pressed(GLFW_KEY_L)) {
         lookat_camera = build_lookat_camera(camera, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 2.0f);
         camera = lookat_camera;
         window->set_user_pointer(camera.get());
     }
-
     if (game_input->get_is_key_pressed(GLFW_KEY_F)) {
         free_camera = build_free_camera(camera);
         camera = free_camera;
         window->set_user_pointer(camera.get());
     }
 
-    if (game_input->get_is_key_pressed(GLFW_KEY_UP)) {
-        chess::Square new_square = chess_game->move_selecting_square(chess::Direction::NORTH);
+    // Muda a seleção da casa atual de acordo com a perspectiva
+    if (game_input->get_is_key_pressed(GLFW_KEY_DOWN)) {
+        chess::Direction direction;
+        if (chess_game->board.sideToMove() == chess::Color::WHITE) {
+            direction = chess::Direction::SOUTH;
+        } else {
+            direction = chess::Direction::NORTH;
+        }
+        chess::Square new_square = chess_game->move_selecting_square(direction);
         if (new_square != chess::Square::NO_SQ)
             board->set_uniform("selecting_square", glm::vec2(new_square.file(), new_square.rank()));
     }
-
-    if (game_input->get_is_key_pressed(GLFW_KEY_DOWN)) {
-        chess::Square new_square = chess_game->move_selecting_square(chess::Direction::SOUTH);
+    if (game_input->get_is_key_pressed(GLFW_KEY_UP)) {
+        chess::Direction direction;
+        if (chess_game->board.sideToMove() == chess::Color::WHITE) {
+            direction = chess::Direction::NORTH;
+        } else {
+            direction = chess::Direction::SOUTH;
+        }
+        chess::Square new_square = chess_game->move_selecting_square(direction);
         if (new_square != chess::Square::NO_SQ) {
             board->set_uniform("selecting_square", glm::vec2(new_square.file(), new_square.rank()));
         }
     }
-
-    if (game_input->get_is_key_pressed(GLFW_KEY_LEFT)) {
-        chess::Square new_square = chess_game->move_selecting_square(chess::Direction::WEST);
-        if (new_square != chess::Square::NO_SQ) {
-            board->set_uniform("selecting_square", glm::vec2(new_square.file(), new_square.rank()));
-        }
-    }
-
     if (game_input->get_is_key_pressed(GLFW_KEY_RIGHT)) {
-        chess::Square new_square = chess_game->move_selecting_square(chess::Direction::EAST);
+        chess::Direction direction;
+        if (chess_game->board.sideToMove() == chess::Color::WHITE) {
+            direction = chess::Direction::EAST;
+        } else {
+            direction = chess::Direction::WEST;
+        }
+        chess::Square new_square = chess_game->move_selecting_square(direction);
+        if (new_square != chess::Square::NO_SQ) {
+            board->set_uniform("selecting_square", glm::vec2(new_square.file(), new_square.rank()));
+        }
+    }
+    if (game_input->get_is_key_pressed(GLFW_KEY_LEFT)) {
+        chess::Direction direction;
+        if (chess_game->board.sideToMove() == chess::Color::WHITE) {
+            direction = chess::Direction::WEST;
+        } else {
+            direction = chess::Direction::EAST;
+        }
+        chess::Square new_square = chess_game->move_selecting_square(direction);
         if (new_square != chess::Square::NO_SQ) {
             board->set_uniform("selecting_square", glm::vec2(new_square.file(), new_square.rank()));
         }
     }
 
+    // Muda o tipo de projeção
     if (game_input->get_is_key_pressed(GLFW_KEY_P))
         camera->toggle_perspective_projection(true);
 
@@ -280,7 +383,7 @@ void GameplayState::update(float delta_t)
     game_input->update();
     input->update();
 
-    sky->set_transform(Matrix_Translate(camera->get_position().x - 0.5,
+    sky->set_transform(0, Matrix_Translate(camera->get_position().x - 0.5,
                                         camera->get_position().y - 0.5,
                                         camera->get_position().z - 0.5));
 
@@ -288,6 +391,41 @@ void GameplayState::update(float delta_t)
     gpu_program->set_uniform("projection", camera->get_projection_matrix());
 
     hud->update(input->get_cursor_position(), col);
+
+
+    // PASSO 2: atualização da lógica do jogo segundo os inputs
+
+    if (chess_game->current_state == ChessGame::IngameState::SELECTING_SQUARES) {
+        chess::Piece selected_piece = chess_game->board.at(chess_game->selected_square);
+
+        if (chess_game->current_piece_to_move == chess::Piece::NONE) {
+            if (selected_piece != chess::Piece::NONE &&
+                selected_piece.color() == chess_game->board.sideToMove()) {
+                    chess_game->set_origin_square(chess_game->selected_square);
+                    chess_game->set_piece_to_move(selected_piece);
+            }
+        } else {
+            if (selected_piece == chess::Piece::NONE ||
+                selected_piece.color() != chess_game->board.sideToMove()) {
+                    chess::Move move = chess::Move::make(chess_game->origin_square, chess_game->selected_square);
+                    if (chess_game->is_move_valid(move)) {
+                        chess_game->make_move(move);
+                        chess::movegen::legalmoves(chess_game->moves, chess_game->board);
+                        chess_game->set_selected_square(chess::Square::NO_SQ); 
+                        chess_game->set_origin_square(chess::Square::NO_SQ); 
+                        chess_game->set_piece_to_move(chess::Piece::NONE); 
+                        chess_game->current_state = ChessGame::IngameState::ONGOING_MOVE;
+                        // iniciar animação
+                        // troca de perspectiva
+                    }
+            } else if (selected_piece.color() == chess_game->board.sideToMove()) {
+                chess_game->set_origin_square(chess_game->selected_square);
+                chess_game->set_piece_to_move(selected_piece);
+            }
+        }
+        //printf("%d\n", static_cast<int>(selected_piece));
+    } 
+
 }
 
 void GameplayState::draw()

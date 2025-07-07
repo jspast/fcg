@@ -7,6 +7,7 @@
 ChessGame::ChessGame(std::string_view fen)
 {
     board = chess::Board(fen);
+    chess::movegen::legalmoves(moves, board);
 }
 
 bool ChessGame::is_move_valid(chess::Move move)
@@ -22,14 +23,23 @@ void ChessGame::make_move(chess::Move move)
     board.makeMove(move);
 }
 
+void ChessGame::set_selecting_square(chess::Square square)
+{
+    selecting_square = square;
+}
+
 void ChessGame::set_selected_square(chess::Square square)
 {
     selected_square = square;
 }
 
-void ChessGame::set_selecting_square(chess::Square square)
+void ChessGame::set_piece_to_move(chess::Piece piece) {
+    current_piece_to_move = piece;
+}
+
+void ChessGame::set_origin_square(chess::Square square)
 {
-    selecting_square = square;
+    origin_square = square;
 }
 
 chess::Square ChessGame::move_selecting_square(chess::Direction direction)
