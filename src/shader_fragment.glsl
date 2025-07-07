@@ -123,7 +123,7 @@ vec3 blinn_phong_specular_term(vec3 specular_light_color,
 {
     vec4 half_vec = (view_vec + light_vec) / length(view_vec + light_vec);
 
-    return specular_refl_color * specular_light_color * pow(dot(normal, half_vec), q);
+    return specular_refl_color * specular_light_color * pow(max(0.0, dot(normal, half_vec)), q);
 }
 
 vec3 glossy_reflection(vec4 refl_vec)
@@ -220,7 +220,7 @@ void main()
             specular_light_color = texture(SkyImage, glossy_reflection(refl_vec)).rgb;
             specular_refl_color = max(vec3(0.0), (1 - 4 * gain(texture(TableRoughness, texcoords).r, 0.5)));
 
-            q = 6.0;
+            q = 15.0;
             break;
 
         case BOARD:
@@ -232,9 +232,9 @@ void main()
 
             refl_vec = reflect(view_vec, norm);
             specular_light_color = texture(SkyImage, refl_vec.xyz).rgb;
-            specular_refl_color = 0.1 * (1 - texture(BoardRoughness, texcoords).rgb);
+            specular_refl_color = 0.05 * (1 - texture(BoardRoughness, texcoords).rgb);
 
-            q = 200.0;
+            q = 60.0;
 
             if (get_current_square() == selecting_square) {
                 surface_color *= 0.1;
@@ -262,7 +262,7 @@ void main()
                     refl_vec = reflect(view_vec, norm);
                     specular_light_color = texture(SkyImage, refl_vec.xyz).rgb;
                     specular_refl_color = vec3(0.1);
-                    q = 6.0;
+                    q = 60.0;
                     break;
             }
             break;
