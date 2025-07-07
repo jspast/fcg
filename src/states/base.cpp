@@ -1,8 +1,8 @@
 #include <memory>
 
 #include "states/base.hpp"
-#include "states/loading.hpp"
 #include "input.hpp"
+#include "states/menu.hpp"
 
 void BaseState::load()
 {
@@ -17,7 +17,7 @@ void BaseState::load()
         std::set<int> {}
     );
 
-    manager->push_state(std::make_unique<LoadingState>());
+    manager->push_state(std::make_unique<MenuState>());
 }
 
 void BaseState::unload() {}

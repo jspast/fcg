@@ -4,19 +4,72 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
-#include <glm/ext/vector_float4.hpp>
+#include <glm/vec4.hpp>
+#include <glm/vec2.hpp>
 
+#include "input.hpp"
 #include "textrendering.hpp"
 #include "hud.hpp"
 
 #define TIMINGS_UPDATE_INTERVAL 1.0f
 
-#define BORDER_MARGIN (charwidth)
+Button::Button(GLFWwindow *w, InputManager *i, glm::vec2 pos, std::string t, float s)
+{
+    window = w;
+    input = i;
+    pos_start.x = pos.x;
+    pos_end.y = pos.y;
+    text = t;
 
-#define HUD_TOP (1.0f - BORDER_MARGIN)
-#define HUD_BOTTOM (-1.0f + BORDER_MARGIN)
-#define HUD_START (-1.0f + BORDER_MARGIN)
-#define HUD_END (1.0f - BORDER_MARGIN)
+    set_scale(s);
+}
+
+void Button::set_text(std::string t)
+{
+    text = t;
+}
+
+void Button::set_scale(float s)
+{
+    if (scale == s)
+        return;
+
+    scale = s;
+
+    float lineheight = TextRendering_LineHeight(window) * scale;
+    float charwidth = TextRendering_CharWidth(window) * scale;
+
+    pos_start.y = pos_end.y - lineheight;
+    pos_end.x = pos_start.x + charwidth * text.length();
+}
+
+bool Button::is_selecting()
+{
+    int height, width;
+    glfwGetWindowSize(window, &width, &height);
+
+    glm::vec2 cursor_ndc = glm::vec2((input->get_cursor_position().x / int(width/2)) - 1,
+                                     -(input->get_cursor_position().y / int(height/2)) + 1);
+
+    if (pos_start.x < cursor_ndc.x && pos_end.x > cursor_ndc.x &&
+        pos_start.y < cursor_ndc.y && pos_end.y > cursor_ndc.y)
+        return true;
+
+    return false;
+}
+
+bool Button::is_clicked()
+{
+    if (!is_selecting())
+        return false;
+
+    return input->get_is_mouse_button_pressed(GLFW_MOUSE_BUTTON_1);
+}
+
+void Button::draw()
+{
+    TextRendering_PrintString(window, text, pos_start.x, pos_start.y, scale);
+}
 
 Hud::Hud(GLFWwindow *w, std::shared_ptr<Camera> *c)
 {
@@ -83,7 +136,6 @@ void Hud::draw()
 void Hud::render_debug_info()
 {
     float lineheight = TextRendering_LineHeight(window);
-    float charwidth = TextRendering_CharWidth(window);
 
     TextRendering_PrintString(window, std::format("GPU: {}, {}\n",
                                         debug_vendor, debug_renderer),

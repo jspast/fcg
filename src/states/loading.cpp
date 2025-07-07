@@ -7,37 +7,75 @@
 
 #include "textrendering.hpp"
 
+LoadingState::LoadingState(TEXTURE_QUALITY q)
+{
+    texture_quality = q;
+}
+
 void LoadingState::load()
 {
-    gpu_program->load_cubemap_from_hdr_files({"../../data/textures/sky/px_high.hdr",
-                                              "../../data/textures/sky/nx_high.hdr",
-                                              "../../data/textures/sky/py_high.hdr",
-                                              "../../data/textures/sky/ny_high.hdr",
-                                              "../../data/textures/sky/pz_high.hdr",
-                                              "../../data/textures/sky/nz_high.hdr"},
-                                             "SkyImage");
+    if (texture_quality == HIGH) {
+        gpu_program->load_cubemap_from_hdr_files({"../../data/textures/sky/px_high.hdr",
+                                                  "../../data/textures/sky/nx_high.hdr",
+                                                  "../../data/textures/sky/py_high.hdr",
+                                                  "../../data/textures/sky/ny_high.hdr",
+                                                  "../../data/textures/sky/pz_high.hdr",
+                                                  "../../data/textures/sky/nz_high.hdr"},
+                                                  "SkyImage");
 
-    gpu_program->load_textures_async({
-        {"../../data/textures/floor/diffuse_high.jpg", "FloorImage"},
-        {"../../data/textures/floor/ambient_high.jpg", "FloorAmbient"},
-        {"../../data/textures/floor/normal_high.jpg", "FloorNormal"},
+        gpu_program->load_textures_async({
+            {"../../data/textures/floor/diffuse_high.jpg", "FloorImage"},
+            {"../../data/textures/floor/ambient_high.jpg", "FloorAmbient"},
+            {"../../data/textures/floor/normal_high.jpg", "FloorNormal"},
 
-        {"../../data/textures/table/diffuse_high.jpg", "TableImage"},
-        {"../../data/textures/table/ambient_high.jpg", "TableAmbient"},
-        {"../../data/textures/table/roughness_high.jpg", "TableRoughness"},
-        {"../../data/textures/table/normal_high.jpg", "TableNormal"},
+            {"../../data/textures/table/diffuse_high.jpg", "TableImage"},
+            {"../../data/textures/table/ambient_high.jpg", "TableAmbient"},
+            {"../../data/textures/table/roughness_high.jpg", "TableRoughness"},
+            {"../../data/textures/table/normal_high.jpg", "TableNormal"},
 
-        {"../../data/textures/board/diffuse_high.jpg", "BoardImage"},
-        {"../../data/textures/board/ambient_high.jpg", "BoardAmbient"},
-        {"../../data/textures/board/roughness_high.jpg", "BoardRoughness"},
-        {"../../data/textures/board/normal_high.jpg", "BoardNormal"},
+            {"../../data/textures/board/diffuse_high.jpg", "BoardImage"},
+            {"../../data/textures/board/ambient_high.jpg", "BoardAmbient"},
+            {"../../data/textures/board/roughness_high.jpg", "BoardRoughness"},
+            {"../../data/textures/board/normal_high.jpg", "BoardNormal"},
 
-        {"../../data/textures/black_pieces/diffuse_high.jpg", "BlackPiecesImage"},
-        {"../../data/textures/black_pieces/ambient_high.jpg", "BlackPiecesAmbient"},
+            {"../../data/textures/black_pieces/diffuse_high.jpg", "BlackPiecesImage"},
+            {"../../data/textures/black_pieces/ambient_high.jpg", "BlackPiecesAmbient"},
 
-        {"../../data/textures/white_pieces/diffuse_high.jpg", "WhitePiecesImage"},
-        {"../../data/textures/white_pieces/ambient_high.jpg", "WhitePiecesAmbient"},
-    });
+            {"../../data/textures/white_pieces/diffuse_high.jpg", "WhitePiecesImage"},
+            {"../../data/textures/white_pieces/ambient_high.jpg", "WhitePiecesAmbient"},
+        });
+    }
+    else {
+        gpu_program->load_cubemap_from_hdr_files({"../../data/textures/sky/px_low.hdr",
+                                                  "../../data/textures/sky/nx_low.hdr",
+                                                  "../../data/textures/sky/py_low.hdr",
+                                                  "../../data/textures/sky/ny_low.hdr",
+                                                  "../../data/textures/sky/pz_low.hdr",
+                                                  "../../data/textures/sky/nz_low.hdr"},
+                                                  "SkyImage");
+
+        gpu_program->load_textures_async({
+            {"../../data/textures/floor/diffuse_low.jpg", "FloorImage"},
+            {"../../data/textures/floor/ambient_low.jpg", "FloorAmbient"},
+            {"../../data/textures/floor/normal_low.jpg", "FloorNormal"},
+
+            {"../../data/textures/table/diffuse_low.jpg", "TableImage"},
+            {"../../data/textures/table/ambient_low.jpg", "TableAmbient"},
+            {"../../data/textures/table/roughness_low.jpg", "TableRoughness"},
+            {"../../data/textures/table/normal_low.jpg", "TableNormal"},
+
+            {"../../data/textures/board/diffuse_low.jpg", "BoardImage"},
+            {"../../data/textures/board/ambient_low.jpg", "BoardAmbient"},
+            {"../../data/textures/board/roughness_low.jpg", "BoardRoughness"},
+            {"../../data/textures/board/normal_low.jpg", "BoardNormal"},
+
+            {"../../data/textures/black_pieces/diffuse_low.jpg", "BlackPiecesImage"},
+            {"../../data/textures/black_pieces/ambient_low.jpg", "BlackPiecesAmbient"},
+
+            {"../../data/textures/white_pieces/diffuse_low.jpg", "WhitePiecesImage"},
+            {"../../data/textures/white_pieces/ambient_low.jpg", "WhitePiecesAmbient"},
+        });
+    }
 }
 
 void LoadingState::unload() {}

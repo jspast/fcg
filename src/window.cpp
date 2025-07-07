@@ -13,7 +13,7 @@ void glfw_error_callback(int error, const char* description)
     std::cerr << "ERROR: GLFW: " << description << std::endl;
 }
 
-Window::Window(const char* title, int width, int height, bool enable_cursor)
+Window::Window(const char* title, int width, int height)
 {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);
@@ -37,8 +37,6 @@ Window::Window(const char* title, int width, int height, bool enable_cursor)
 
     if (glfwRawMouseMotionSupported())
         glfwSetInputMode(glfw_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-
-    toggle_cursor(enable_cursor);
 
     // Indicamos que as chamadas OpenGL deverão renderizar nesta janela
     glfwMakeContextCurrent(glfw_window);

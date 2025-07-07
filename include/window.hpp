@@ -11,7 +11,7 @@ void glfw_error_callback(int error, const char* description);
 class Window {
     protected:
         bool fullscreen = GLFW_FALSE;
-        bool cursor_enabled = GLFW_FALSE;
+        bool cursor_enabled = GLFW_TRUE;
 
         int refresh_rate;
 
@@ -24,7 +24,7 @@ class Window {
         void maximize();
 
     public:
-        Window(const char* title, int width=DEFAULT_WIDTH, int height=DEFAULT_HEIGHT, bool enable_cursor=GLFW_FALSE);
+        Window(const char* title, int width=DEFAULT_WIDTH, int height=DEFAULT_HEIGHT);
         ~Window();
 
         GLFWwindow *glfw_window;

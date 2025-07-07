@@ -6,6 +6,42 @@
 #include <GLFW/glfw3.h>
 
 #include "camera.hpp"
+#include "input.hpp"
+
+#define BORDER_MARGIN (0.025)
+
+#define HUD_TOP (1.0f - BORDER_MARGIN)
+#define HUD_BOTTOM (-1.0f + BORDER_MARGIN)
+#define HUD_START (-1.0f + BORDER_MARGIN)
+#define HUD_END (1.0f - BORDER_MARGIN)
+
+class Button {
+    public:
+        Button(GLFWwindow *window,
+               InputManager *input,
+               glm::vec2 pos,
+               std::string text,
+               float scale=1.0f);
+
+        void draw();
+
+        bool is_selecting();
+        bool is_clicked();
+
+        void set_text(std::string text);
+        void set_scale(float scale);
+
+    private:
+        GLFWwindow *window;
+        InputManager *input;
+
+        glm::vec2 pos_start;
+        glm::vec2 pos_end;
+
+        std::string text;
+
+        float scale;
+};
 
 class Hud {
     public:

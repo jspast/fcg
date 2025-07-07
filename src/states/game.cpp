@@ -22,6 +22,9 @@ void GameplayState::load()
     lookat_camera->set_target_position(0.0f, 1.0f, 0.0f);
     lookat_camera->set_distance(2.0f);
 
+    glm::vec2 window_size = window->get_size();
+    camera->set_aspect_ratio((float)window_size.x / window_size.y);
+
     chess_game = std::make_unique<ChessGame>();
 
     game_input = std::make_unique<InputManager>(
@@ -52,6 +55,8 @@ void GameplayState::load()
             GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER
         }
     );
+
+    game_input->set_is_enabled(false);
 
     input = std::make_unique<InputManager>(
         window->glfw_window,

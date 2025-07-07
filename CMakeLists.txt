@@ -16,6 +16,7 @@ set(SOURCES
   src/collisions.cpp
   src/state.cpp
   src/states/base.cpp
+  src/states/menu.cpp
   src/states/loading.cpp
   src/states/game.cpp
 )
