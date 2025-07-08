@@ -6,12 +6,89 @@
 #include <utility>
 
 #include <glm/vec4.hpp>
+#include <unordered_map>
 #include "object.hpp"
 #include "chess_game.hpp"
 #include "camera.hpp"
 #include "hud.hpp"
 #include "input.hpp"
 #include "state.hpp"
+
+class PieceTracker {
+    private:
+        std::unordered_map<std::size_t, int> pieceIDs;
+
+    public:
+        PieceTracker() {
+            init();
+        }
+
+        void init() {
+            // As 8 primeiras peças são os peões brancos
+            pieceIDs[squareHash(chess::Square::SQ_A2)] = 0;
+            pieceIDs[squareHash(chess::Square::SQ_B2)] = 1;
+            pieceIDs[squareHash(chess::Square::SQ_C2)] = 2;
+            pieceIDs[squareHash(chess::Square::SQ_D2)] = 3;
+            pieceIDs[squareHash(chess::Square::SQ_E2)] = 4;
+            pieceIDs[squareHash(chess::Square::SQ_F2)] = 5;
+            pieceIDs[squareHash(chess::Square::SQ_G2)] = 6;
+            pieceIDs[squareHash(chess::Square::SQ_H2)] = 7;
+            
+            // As próximas duas são as torres brancas
+            pieceIDs[squareHash(chess::Square::SQ_A1)] = 8;
+            pieceIDs[squareHash(chess::Square::SQ_H1)] = 9;
+
+            // As próximas duas são os cavalos brancos
+            pieceIDs[squareHash(chess::Square::SQ_B1)] = 10;
+            pieceIDs[squareHash(chess::Square::SQ_G1)] = 11;
+
+            // As próximas duas são os bispos brancos
+            pieceIDs[squareHash(chess::Square::SQ_C1)] = 12;
+            pieceIDs[squareHash(chess::Square::SQ_F1)] = 13;
+
+            // Por fim, a rainha e o rei brancos
+            pieceIDs[squareHash(chess::Square::SQ_D1)] = 14;    // Rainha
+            pieceIDs[squareHash(chess::Square::SQ_E1)] = 15;    // Rei
+
+            // A mesma lógica, mas para as peças pretas
+            // Peões pretos
+            pieceIDs[squareHash(chess::Square::SQ_A7)] = 16;
+            pieceIDs[squareHash(chess::Square::SQ_B7)] = 17;
+            pieceIDs[squareHash(chess::Square::SQ_C7)] = 18;
+            pieceIDs[squareHash(chess::Square::SQ_D7)] = 19;
+            pieceIDs[squareHash(chess::Square::SQ_E7)] = 20;
+            pieceIDs[squareHash(chess::Square::SQ_F7)] = 21;
+            pieceIDs[squareHash(chess::Square::SQ_G7)] = 22;
+            pieceIDs[squareHash(chess::Square::SQ_H7)] = 23;
+            // Torres pretas
+            pieceIDs[squareHash(chess::Square::SQ_A8)] = 24;
+            pieceIDs[squareHash(chess::Square::SQ_H8)] = 25;
+            // Cavalos preto
+            pieceIDs[squareHash(chess::Square::SQ_B8)] = 26;
+            pieceIDs[squareHash(chess::Square::SQ_G8)] = 27;
+            // Bispos pretos
+            pieceIDs[squareHash(chess::Square::SQ_C8)] = 28;
+            pieceIDs[squareHash(chess::Square::SQ_F8)] = 29;
+            // Bispos pretos
+            pieceIDs[squareHash(chess::Square::SQ_D8)] = 30;
+            pieceIDs[squareHash(chess::Square::SQ_E8)] = 31;
+        }
+
+        std::size_t squareHash(const chess::Square sq) const {
+            return static_cast<std::size_t>(sq.index());
+        }
+
+        int getPieceID(chess::Square sq) const {
+            auto it = pieceIDs.find(squareHash(sq));
+            return (it != pieceIDs.end()) ? it->second : -1;
+        }
+
+        void movePiece(chess::Square from, chess::Square to) {
+            int id = pieceIDs[squareHash(from)];
+            pieceIDs.erase(squareHash(from));
+            pieceIDs[squareHash(to)] = id;
+        }
+};
 
 class GameplayState: public GameState {
     public:
@@ -63,5 +140,11 @@ class GameplayState: public GameState {
         std::shared_ptr<Object> black_queen;
         std::shared_ptr<Object> black_bishop;
 
+        PieceTracker piece_tracker;
+
         std::vector<std::pair<glm::vec4, AABB>> aabbs;
+
+        void process_inputs(float delta_t);
+        void update_chess_game(float delta_t);
+        void update_3D_board(chess::Square origin_sq, chess::Square landing_sq, chess::Piece piece);
 };

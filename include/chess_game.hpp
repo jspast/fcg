@@ -22,7 +22,7 @@ class ChessGame {
         void make_move(chess::Move move);
 
         chess::Square selecting_square = chess::Square::SQ_A1;
-        chess::Square selected_square = chess::Square::SQ_A1;
+        chess::Square selected_square = chess::Square::NO_SQ;
         chess::Piece current_piece_to_move = chess::Piece::NONE;
         chess::Square origin_square = chess::Square::NO_SQ;
 

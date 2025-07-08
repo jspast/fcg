@@ -68,7 +68,6 @@ void GameplayState::load()
         std::set<int> {}
     );
 
-
     hud = std::make_unique<Hud>(window->glfw_window, &camera);
 
     sky_model    = std::make_shared<ObjModel>("../../data/models/cube.obj");
@@ -206,11 +205,9 @@ void GameplayState::load()
 
 void GameplayState::unload() {}
 
-void GameplayState::update(float delta_t)
+void GameplayState::process_inputs(float delta_t) 
 {
     glm::vec4 col;
-
-    // PASSO 1: atualizações sob demanda
 
     // Identifica a casa apontada, enquanto não há uma animação em progresso
     if (!game_input->get_is_enabled() && 
@@ -391,11 +388,84 @@ void GameplayState::update(float delta_t)
     gpu_program->set_uniform("projection", camera->get_projection_matrix());
 
     hud->update(input->get_cursor_position(), col);
+}
 
+void GameplayState::update_3D_board(chess::Square origin_sq, chess::Square landing_sq, chess::Piece piece) {
+    float new_x = -BOARD_START - SQUARE_SIZE / 2.0 - SQUARE_SIZE * landing_sq.file();
+    float new_z = BOARD_START + SQUARE_SIZE / 2.0 + SQUARE_SIZE * landing_sq.rank();
 
-    // PASSO 2: atualização da lógica do jogo segundo os inputs
+    std::cout << piece << std::endl;
 
-    if (chess_game->current_state == ChessGame::IngameState::SELECTING_SQUARES) {
+    int piece_id = piece_tracker.getPieceID(origin_sq);
+    piece_tracker.movePiece(origin_sq, landing_sq);
+    if (piece.color() == chess::Color::WHITE) {
+        if (piece_id < 8) {
+            white_pawn->set_transform(7-piece_id, Matrix_Translate(new_x, 0.0f, new_z));
+        } else {
+            switch (piece_id) {
+                case 8:
+                    white_rook->set_transform(1, Matrix_Translate(new_x, 0.0f, new_z));
+                    break;
+                case 9:
+                    white_rook->set_transform(0, Matrix_Translate(new_x, 0.0f, new_z));
+                    break;
+                case 10:
+                    white_knight->set_transform(1, Matrix_Translate(new_x, 0.0f, new_z) * Matrix_Rotate_Y(M_PI));
+                    break;
+                case 11:
+                    white_knight->set_transform(0, Matrix_Translate(new_x, 0.0f, new_z) * Matrix_Rotate_Y(M_PI));
+                    break;
+                case 12:
+                    white_bishop->set_transform(1, Matrix_Translate(new_x, 0.0f, new_z));
+                    break;
+                case 13:
+                    white_bishop->set_transform(0, Matrix_Translate(new_x, 0.0f, new_z));
+                    break;
+                case 14:
+                    white_queen->set_transform(0, Matrix_Translate(new_x, 0.0f, new_z));
+                    break;
+                case 15:
+                    white_king->set_transform(0, Matrix_Translate(new_x, 0.0f, new_z));
+                    break;
+            }
+        }
+    } else {
+        if (piece_id < 24) {
+            black_pawn->set_transform(7-piece_id+16, Matrix_Translate(new_x, 0.0f, new_z));
+        } else {
+            switch (piece_id) {
+                case 24:
+                    black_rook->set_transform(1, Matrix_Translate(new_x, 0.0f, new_z));
+                    break;
+                case 25:
+                    black_rook->set_transform(0, Matrix_Translate(new_x, 0.0f, new_z));
+                    break;
+                case 26:
+                    black_knight->set_transform(1, Matrix_Translate(new_x, 0.0f, new_z));
+                    break;
+                case 27:
+                    black_knight->set_transform(0, Matrix_Translate(new_x, 0.0f, new_z));
+                    break;
+                case 28:
+                    black_bishop->set_transform(1, Matrix_Translate(new_x, 0.0f, new_z));
+                    break;
+                case 29:
+                    black_bishop->set_transform(0, Matrix_Translate(new_x, 0.0f, new_z));
+                    break;
+                case 30:
+                    black_queen->set_transform(0, Matrix_Translate(new_x, 0.0f, new_z));
+                    break;
+                case 31:
+                    black_king->set_transform(0, Matrix_Translate(new_x, 0.0f, new_z));
+                    break;
+            }
+        }
+    }
+}
+
+void GameplayState::update_chess_game(float delta_t) {
+    if (chess_game->current_state == ChessGame::IngameState::SELECTING_SQUARES &&
+        chess_game->selected_square != chess::Square::NO_SQ) {
         chess::Piece selected_piece = chess_game->board.at(chess_game->selected_square);
 
         if (chess_game->current_piece_to_move == chess::Piece::NONE) {
@@ -407,24 +477,38 @@ void GameplayState::update(float delta_t)
         } else {
             if (selected_piece == chess::Piece::NONE ||
                 selected_piece.color() != chess_game->board.sideToMove()) {
-                    chess::Move move = chess::Move::make(chess_game->origin_square, chess_game->selected_square);
-                    if (chess_game->is_move_valid(move)) {
-                        chess_game->make_move(move);
-                        chess::movegen::legalmoves(chess_game->moves, chess_game->board);
-                        chess_game->set_selected_square(chess::Square::NO_SQ); 
-                        chess_game->set_origin_square(chess::Square::NO_SQ); 
-                        chess_game->set_piece_to_move(chess::Piece::NONE); 
-                        chess_game->current_state = ChessGame::IngameState::ONGOING_MOVE;
-                        // iniciar animação
-                        // troca de perspectiva
-                    }
+                chess::Move move = chess::Move::make(chess_game->origin_square, chess_game->selected_square);
+                if (chess_game->is_move_valid(move)) {
+                    std::cout << chess_game->current_piece_to_move << std::endl;
+                    chess_game->make_move(move);
+                    std::cout << chess_game->board << std::endl;
+                    chess_game->current_state = ChessGame::IngameState::ONGOING_MOVE;
+                    update_3D_board(chess_game->origin_square, chess_game->selected_square, chess_game->current_piece_to_move);
+                    chess::movegen::legalmoves(chess_game->moves, chess_game->board);
+                    chess_game->set_origin_square(chess::Square::NO_SQ); 
+                    chess_game->set_selected_square(chess::Square::NO_SQ); 
+                    chess_game->set_piece_to_move(chess::Piece::NONE); 
+                }
             } else if (selected_piece.color() == chess_game->board.sideToMove()) {
                 chess_game->set_origin_square(chess_game->selected_square);
                 chess_game->set_piece_to_move(selected_piece);
             }
         }
-        //printf("%d\n", static_cast<int>(selected_piece));
-    } 
+    } else {
+        // Aqui vem a lógica da animação
+        // Peça movendo (com curva Bézier) + peça tombando + rotação do tabuleiro
+        chess_game->current_state = ChessGame::IngameState::SELECTING_SQUARES;
+    }
+}
+
+void GameplayState::update(float delta_t)
+{
+    // PASSO 1: atualizações sob demanda
+    process_inputs(delta_t);
+
+    // PASSO 2: atualização da lógica do jogo segundo os inputs
+    update_chess_game(delta_t);
+    
 
 }
 
