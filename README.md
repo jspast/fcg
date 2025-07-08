@@ -16,7 +16,7 @@ Conseguiu substituir muitas buscas rápidas na documentação e internet, mas n�
 ## Conceitos de Computação Gráfica aplicados no desenvolvimento
 
 - [x] Malhas poligonais complexas
-- [ ] Transformações geométricas controladas pelo usuário
+- [x] Transformações geométricas controladas pelo usuário
 - [x] Câmera livre e câmera look-at
 - [x] Instâncias de objetos
 - [ ] Três tipos de testes de intersecção
@@ -25,6 +25,23 @@ Conseguiu substituir muitas buscas rápidas na documentação e internet, mas n�
 - [x] Mapeamento de texturas em todos os objetos
 - [ ] Movimentação com curva Bézier cúbica
 - [ ] Animações baseadas no tempo ($\Delta t$)
+
+Extras:
+- [x] Mapeamento de normais
+- [x] SkyBox com Reflection Mapping
+- [x] Seleção de casas do tabuleiro com o mouse
+
+![](screenshots/complex_meshes_0.jpg)
+
+![](screenshots/complex_meshes_1.jpg)
+*Malhas poligonais complexas*
+
+![](screenshots/lambert_diffuse_illumination.jpg)
+*Modelo de Iluminação Difusa de Lambert com Interpolação de Gouraud*
+
+![](screenshots/blinn_phong_illumination.jpg)
+*Modelo de Iluminação de Blinn-Phong com Interpolação de Phong*
+
 
 ## Manual de usuário
 
