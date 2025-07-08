@@ -15,6 +15,17 @@ Conseguiu substituir muitas buscas rápidas na documentação e internet, mas n�
 
 ## Conceitos de Computação Gráfica aplicados no desenvolvimento
 
+- [x] Malhas poligonais complexas
+- [ ] Transformações geométricas controladas pelo usuário
+- [x] Câmera livre e câmera look-at
+- [x] Instâncias de objetos
+- [ ] Três tipos de testes de intersecção
+- [x] Modelos de Iluminação Difusa e Blinn-Phong
+- [x] Modelos de Interpolação de Phong e Gouraud
+- [x] Mapeamento de texturas em todos os objetos
+- [ ] Movimentação com curva Bézier cúbica
+- [ ] Animações baseadas no tempo ($\Delta t$)
+
 ## Manual de usuário
 
 ## Compilação
