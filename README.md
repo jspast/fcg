@@ -8,13 +8,29 @@ Dupla: João Pastorello e Isadora Schwaab
 
 ## Uso de IAs generativas
 
-O **ChatGPT** foi utilizado principalmente para esclarescer conceitos de C++, como o uso de ponteiros inteligentes, estruturas de dados e processamento assíncrono. Além disso, gerou um esboço do sistema de estados (classes `GameState` e `GameStateManager`) que foi adaptado e incrementado para a utilização no jogo. No geral, a ferramenta foi útil, mas se mostrou incapaz de auxiliar com decisões complexas. Conseguiu substituir muitas buscas rápidas na documentação e internet, mas não tarefas de raciocínio lógico avançado.
+O **ChatGPT** foi utilizado principalmente para esclarescer conceitos de C++, como o uso de ponteiros inteligentes, estruturas de dados e processamento assíncrono.
+Além disso, gerou um esboço do sistema de estados (classes `GameState` e `GameStateManager`) que foi adaptado e incrementado para a utilização no jogo.
+No geral, a ferramenta foi útil, mas se mostrou incapaz de auxiliar com decisões complexas.
+Conseguiu substituir muitas buscas rápidas na documentação e internet, mas não tarefas de raciocínio lógico avançado.
 
 ## Conceitos de Computação Gráfica aplicados no desenvolvimento
 
 ## Manual de usuário
 
 ## Compilação
+
+Este repositório faz uso de submódulos git para incluir bibliotecas externas.
+Para clonar o repositório juntamente com os submódulos utilizados, use o seguinte comando:
+
+```shell
+git clone --recurse-submodules https://github.com/jspast/fcg.git
+```
+
+Caso o repositório já esteja clonado sem os submódulos, use o comando:
+
+```shell
+git submodule update --init --recursive
+```
 
 ### Windows
 
@@ -46,19 +62,19 @@ Caso você tenha problemas de execução, tente atualizar o driver da sua placa 
 
 ##### Ubuntu
 
-```console
+```shell
 apt-get install build-essential make libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxcb1-dev libxext-dev libxrender-dev libxfixes-dev libxau-dev libxdmcp-dev
 ```
 
 ##### Linux Mint
 
-```console
+```shell
 apt-get install build-essential make libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxcb1-dev libxext-dev libxrender-dev libxfixes-dev libxau-dev libxdmcp-dev libmesa-dev libxxf86vm-dev
 ```
 
 ##### Fedora Linux
 
-```console
+```shell
 dnf install make automake gcc gcc-c++ kernel-devel libXxf86vm-devel mesa-libGL-devel libxcb-devel libX11-devel libXrandr-devel libXinerama-devel libXcursor-devel libXext-devel libXrender-devel libXfixes-devel libXau-devel libXdmcp-devel
 ```
 
@@ -75,18 +91,18 @@ Selecione da lista o compilador que você deseja utilizar.
 
 Se necessário, mais [instruções de uso do CMake no VSCode](https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/README.md) estão disponíveis.
 
-### macOS
+### macOS (não testado)
 Para compilar e executar esse projeto no macOS, primeiro você precisa instalar o HOMEBREW, um gerenciador de pacotes para facilitar a instação de bibliotecas.
 O HOMEBREW pode ser instalado com o seguinte comando no terminal:
 
-```console
+```shell
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
 Após a instalação do HOMEBREW, a biblioteca GLFW deve ser instalada.
 Isso pode ser feito pelo terminal com o comando:
 
-```console
+```shell
 brew install glfw
 ```
 
