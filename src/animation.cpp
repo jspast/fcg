@@ -12,7 +12,7 @@ void AnimationCubicBezier::set_control_points(glm::vec4 cp1, glm::vec4 cp2, glm:
 }
 
 void AnimationCubicBezier::set_total_time(float seconds)
-{   
+{
     total_time = seconds;
 }
 
@@ -49,8 +49,6 @@ glm::vec4 AnimationCubicBezier::get_point_bezier(float t_raw)
            3.0f * u * u * t * control_point_2 +
            3.0f * u * t * t * control_point_3 +
            t * t * t * control_point_4;
-
-    // return control_points[0];
 }
 
 glm::vec4 AnimationCubicBezier::get_point_for_object(float delta_t)
@@ -62,7 +60,7 @@ glm::vec4 AnimationCubicBezier::get_point_for_object(float delta_t)
     return get_point_bezier(time_passed);
 }
 
-bool AnimationCubicBezier::is_animation_over() 
+bool AnimationCubicBezier::is_animation_over()
 {
     return (time_passed >= total_time);
 }
@@ -82,11 +80,11 @@ void AnimationCamera::set_distance(float s_dist, float t_dist)
 }
 
 void AnimationCamera::set_total_time(float seconds)
-{   
+{
     total_time = seconds;
 }
 
-void AnimationCamera::reset_time() 
+void AnimationCamera::reset_time()
 {
     time_passed = 0.0f;
 }
@@ -108,7 +106,7 @@ float AnimationCamera::get_distance_for_camera() {
     return current_distance;
 }
 
-bool AnimationCamera::is_animation_over() 
+bool AnimationCamera::is_animation_over()
 {
     return (time_passed >= total_time);
 }

@@ -483,7 +483,7 @@ void Object::draw(const glm::mat4 parent_transform)
             model->draw(gpu_program);
         }
     }
-    
+
     for (auto& child : children) {
         child->draw(t);
     }
@@ -501,12 +501,12 @@ void Object::add_instance(glm::mat4 t)
     inactive_instances.push_back(false);
 }
 
-void Object::deactivate_instance(int instance_id) 
+void Object::deactivate_instance(int instance_id)
 {
     inactive_instances[instance_id] = true;
 }
 
-bool Object::is_active(int instance_id) 
+bool Object::is_active(int instance_id)
 {
     return !inactive_instances[instance_id];
 }

@@ -2,9 +2,9 @@
 #include <glm/vec2.hpp>
 #include <glm/mat4x4.hpp>
 
-#include "camera.hpp"
 #include "matrices.hpp"
 #include "collisions.hpp"
+#include "math_constants.hpp"
 
 // Método baseado em: https://antongerdelan.net/opengl/raycasting.html
 glm::vec4 cursor_to_ray(glm::vec2 cursor_pos,

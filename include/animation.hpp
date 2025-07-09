@@ -2,7 +2,7 @@
 
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
-        
+
 class AnimationCubicBezier {
     private:
         glm::vec4 control_point_1;
@@ -12,7 +12,7 @@ class AnimationCubicBezier {
 
         float total_time = 0.6;
         float time_passed = 0.0;
-        
+
     public:
         AnimationCubicBezier(){};
         void set_control_points(glm::vec4 cp1, glm::vec4 cp2, glm::vec4 cp3, glm::vec4 cp4);

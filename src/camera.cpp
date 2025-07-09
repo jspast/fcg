@@ -2,6 +2,7 @@
 
 #include "camera.hpp"
 
+// FONTE: ChatGPT
 template<typename Base, typename T>
 inline bool instanceof(const std::shared_ptr<T> ptr) {
     return std::dynamic_pointer_cast<Base>(ptr) != nullptr;

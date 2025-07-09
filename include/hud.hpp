@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include <string>
+#include <string_view>
 
 #include <GLFW/glfw3.h>
 
@@ -56,10 +56,10 @@ class Hud {
     private:
         bool show_debug_info = false;
 
-        std::string debug_vendor;
-        std::string debug_renderer;
-        std::string debug_glversion;
-        std::string debug_glslversion;
+        std::string_view debug_vendor;
+        std::string_view debug_renderer;
+        std::string_view debug_glversion;
+        std::string_view debug_glslversion;
 
         GLFWwindow* window;
 

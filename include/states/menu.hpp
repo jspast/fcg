@@ -1,9 +1,9 @@
 #pragma once
 
+#include "states/loading.hpp"
 #include "state.hpp"
 #include "input.hpp"
 #include "hud.hpp"
-#include "states/loading.hpp"
 
 class MenuState: public GameState {
     public:

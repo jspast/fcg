@@ -4,7 +4,6 @@
 #include "states/loading.hpp"
 #include "states/game.hpp"
 #include "state.hpp"
-
 #include "textrendering.hpp"
 
 LoadingState::LoadingState(TEXTURE_QUALITY q)

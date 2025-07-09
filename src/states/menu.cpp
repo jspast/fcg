@@ -1,10 +1,13 @@
 #include "states/menu.hpp"
-#include "GLFW/glfw3.h"
-#include "glm/ext/vector_float2.hpp"
 #include "states/loading.hpp"
-#include "hud.hpp"
-#include "input.hpp"
+
 #include <memory>
+
+#include <GLFW/glfw3.h>
+#include <glm/vec2.hpp>
+#include "hud.hpp"
+
+#include "input.hpp"
 #include "textrendering.hpp"
 
 void MenuState::load()

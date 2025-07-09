@@ -4,8 +4,8 @@
 
 #include <chess.hpp>
 
-#include "chess_game.hpp"
 #include "states/game.hpp"
+#include "chess_game.hpp"
 #include "camera.hpp"
 #include "input.hpp"
 #include "object.hpp"
@@ -150,7 +150,7 @@ void GameplayState::load()
     float board_left = BOARD_START + SQUARE_SIZE / 2.0;
     float board_top = BOARD_START + SQUARE_SIZE / 2.0;
     float board_bottom = -BOARD_START - SQUARE_SIZE / 2.0;
-    
+
     white_king->set_transform(0, Matrix_Translate(board_left + SQUARE_SIZE*3, 0.0f, board_top));
     white_queen->set_transform(0, Matrix_Translate(board_left + SQUARE_SIZE*4, 0.0f, board_top));
     white_rook->set_transform(0, Matrix_Translate(board_left, 0.0f, board_top));
@@ -273,7 +273,7 @@ void GameplayState::process_inputs(float delta_t)
     // Exibe ou oculta informações de depuração
     if (input->get_is_key_pressed(GLFW_KEY_F3))
         hud->toggle_debug_info();
-    
+
     // Troca o tipo de câmera
     if (game_input->get_is_key_pressed(GLFW_KEY_L)) {
         lookat_camera = build_lookat_camera(camera, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 2.0f);
@@ -558,7 +558,7 @@ void GameplayState::update_chess_game(float delta_t) {
                     chess_game->current_state = ChessGame::IngameState::SELECTING_SQUARES;
                 }
             }
-        }   
+        }
     }
 }
 

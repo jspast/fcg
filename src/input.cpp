@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <array>
-#include <cmath>
 
 #include "input.hpp"
 
@@ -137,7 +136,7 @@ bool InputManager::get_is_gamepad_button_pressed(int joystick, int button)
 
 inline float apply_treshold(float value, float treshold)
 {
-    return (std::fabs(value) < treshold) ? 0.0f : value;
+    return (std::abs(value) < treshold) ? 0.0f : value;
 }
 
 float InputManager::get_gamepad_axis_value(int joystick, int axis)

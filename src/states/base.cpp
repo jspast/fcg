@@ -1,8 +1,8 @@
 #include <memory>
 
 #include "states/base.hpp"
-#include "input.hpp"
 #include "states/menu.hpp"
+#include "input.hpp"
 
 void BaseState::load()
 {

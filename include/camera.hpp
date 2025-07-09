@@ -1,7 +1,5 @@
 #pragma once
 
-#define _USE_MATH_DEFINES
-#include <cmath>
 #include <memory>
 
 #include <glm/mat4x4.hpp>
@@ -9,9 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "matrices.hpp"
-
-#define EPSILON (std::numeric_limits<float>::epsilon())
-#define SQRT_EPSILON (0.000345)
+#include "math_constants.hpp"
 
 template<typename Base, typename T>
 inline bool instanceof(const T *ptr);

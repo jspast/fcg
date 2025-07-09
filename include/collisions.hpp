@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cmath>
-
 #include <glm/vec4.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
@@ -15,6 +13,8 @@ class AABB {
         AABB() = default;
         AABB(const glm::vec3& min, const glm::vec3& max) : min(min), max(max) {}
 
+        // FONTE: ChatGPT
+        // Overload de operação de multiplicação para AABB
         AABB operator*(float scalar) const {
             return AABB(min * scalar, max * scalar);
         }

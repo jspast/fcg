@@ -33,7 +33,8 @@ void ChessGame::set_selected_square(chess::Square square)
     selected_square = square;
 }
 
-void ChessGame::set_piece_to_move(chess::Piece piece) {
+void ChessGame::set_piece_to_move(chess::Piece piece)
+{
     current_piece_to_move = piece;
 }
 

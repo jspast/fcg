@@ -1,12 +1,13 @@
 #pragma once
 
 #include <memory>
-
-#include <chess.hpp>
 #include <utility>
+#include <unordered_map>
 
 #include <glm/vec4.hpp>
-#include <unordered_map>
+
+#include <chess.hpp>
+
 #include "object.hpp"
 #include "chess_game.hpp"
 #include "camera.hpp"
@@ -34,7 +35,7 @@ class PieceTracker {
             pieceIDs[squareHash(chess::Square::SQ_F2)] = 5;
             pieceIDs[squareHash(chess::Square::SQ_G2)] = 6;
             pieceIDs[squareHash(chess::Square::SQ_H2)] = 7;
-            
+
             // As próximas duas são as torres brancas
             pieceIDs[squareHash(chess::Square::SQ_A1)] = 8;
             pieceIDs[squareHash(chess::Square::SQ_H1)] = 9;
@@ -147,7 +148,7 @@ class GameplayState: public GameState {
         std::vector<std::pair<glm::vec4, AABB>> aabbs;
 
         AnimationCubicBezier piece_animation;
-        AnimationCamera camera_animation;  
+        AnimationCamera camera_animation;
 
         void process_inputs(float delta_t);
         void update_chess_game(float delta_t);

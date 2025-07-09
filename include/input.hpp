@@ -5,8 +5,8 @@
 #include <vector>
 #include <array>
 
-#include "GLFW/glfw3.h"
-#include "glm/ext/vector_float2.hpp"
+#include <GLFW/glfw3.h>
+#include <glm/vec2.hpp>
 
 // #define MAX_GAMEPADS (GLFW_JOYSTICK_LAST + 1)
 #define MAX_GAMEPADS 2
