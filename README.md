@@ -23,8 +23,8 @@ Conseguiu substituir muitas buscas rápidas na documentação e internet, mas n�
 - [x] Modelos de Iluminação Difusa e Blinn-Phong
 - [x] Modelos de Interpolação de Phong e Gouraud
 - [x] Mapeamento de texturas em todos os objetos
-- [ ] Movimentação com curva Bézier cúbica
-- [ ] Animações baseadas no tempo ($\Delta t$)
+- [x] Movimentação com curva Bézier cúbica
+- [x] Animações baseadas no tempo ($\Delta t$)
 
 Extras:
 - [x] Mapeamento de normais
