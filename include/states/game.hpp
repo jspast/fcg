@@ -147,6 +147,9 @@ class GameplayState: public GameState {
 
         std::vector<std::pair<glm::vec4, AABB>> aabbs;
 
+        void update_shader_selecting_square();
+        void update_shader_selected_square();
+
         AnimationCubicBezier piece_animation;
         AnimationCamera camera_animation;
 

@@ -29,7 +29,6 @@ void GameplayState::load()
     camera->set_aspect_ratio((float)window_size.x / window_size.y);
 
     chess_game = std::make_unique<ChessGame>();
-    chess_game->selected_square = chess::Square::SQ_A1;
 
     game_input = std::make_unique<InputManager>(
         window->glfw_window,
@@ -177,8 +176,6 @@ void GameplayState::load()
         black_pawn->add_instance(Matrix_Translate(board_left + SQUARE_SIZE*i, 0.0f, board_bottom - SQUARE_SIZE));
     }
 
-    board->set_uniform("selecting_square", glm::vec2(0, 0));
-
     aabbs = {
         std::pair(glm::vec4(0.0), floor_model->aabb * 100.0f),
         std::pair(glm::vec4(0.0), table_model->aabb),
@@ -199,6 +196,9 @@ void GameplayState::load()
     board->add_child(black_bishop);
     table->add_child(board);
 
+    update_shader_selecting_square();
+    update_shader_selected_square();
+
     // Enable Z-buffer
     glEnable(GL_DEPTH_TEST);
 
@@ -213,6 +213,24 @@ void GameplayState::load()
 }
 
 void GameplayState::unload() {}
+
+void update_shader_square(Object& board, std::string_view uniform, chess::Square square)
+{
+    if (square != chess::Square::NO_SQ)
+        board.set_uniform(uniform, glm::vec2(square.file(), square.rank()));
+    else
+        board.set_uniform(uniform, glm::vec2(-10, -10));
+}
+
+void GameplayState::update_shader_selecting_square()
+{
+    update_shader_square(*board, "selecting_square", chess_game->selecting_square);
+}
+
+void GameplayState::update_shader_selected_square()
+{
+    update_shader_square(*board, "selected_square", chess_game->selected_square);
+}
 
 void GameplayState::process_inputs(float delta_t) 
 {
@@ -242,12 +260,12 @@ void GameplayState::process_inputs(float delta_t)
             chess::Square new_square(file, rank);
 
             chess_game->selecting_square = new_square;
-            board->set_uniform("selecting_square", glm::vec2(file, rank));
+            update_shader_selecting_square();
 
             // Identifica se a casa apontada foi selecionada com o mouse
             if (input->get_is_mouse_button_released(GLFW_MOUSE_BUTTON_LEFT)) {
                 chess_game->selected_square = new_square;
-                board->set_uniform("selected_square", glm::vec2(file, rank));
+                update_shader_selected_square();
             }
         }
     }
@@ -261,13 +279,12 @@ void GameplayState::process_inputs(float delta_t)
         window->toggle_cursor();
 
         if(game_input->get_is_enabled()) {
-            board->set_uniform("selected_square", glm::vec2(-10, -10));
-            board->set_uniform("selecting_square", glm::vec2(-10, -10));
+            chess_game->selecting_square = chess::Square::NO_SQ;
+            chess_game->selected_square = chess::Square::NO_SQ;
         }
-        else {
-            board->set_uniform("selected_square", glm::vec2(chess_game->selected_square.file(), chess_game->selected_square.rank()));
-            board->set_uniform("selecting_square", glm::vec2(chess_game->selecting_square.file(), chess_game->selecting_square.rank()));
-        }
+
+        update_shader_selecting_square();
+        update_shader_selected_square();
     }
 
     // Exibe ou oculta informações de depuração
@@ -289,50 +306,43 @@ void GameplayState::process_inputs(float delta_t)
     // Muda a seleção da casa atual de acordo com a perspectiva
     if (game_input->get_is_key_pressed(GLFW_KEY_DOWN)) {
         chess::Direction direction;
-        if (chess_game->board.sideToMove() == chess::Color::WHITE) {
+        if (chess_game->board.sideToMove() == chess::Color::WHITE)
             direction = chess::Direction::SOUTH;
-        } else {
+        else
             direction = chess::Direction::NORTH;
-        }
-        chess::Square new_square = chess_game->move_selecting_square(direction);
-        if (new_square != chess::Square::NO_SQ)
-            board->set_uniform("selecting_square", glm::vec2(new_square.file(), new_square.rank()));
+
+        chess_game->selecting_square = chess_game->move_selecting_square(direction);
+        update_shader_selecting_square();
     }
     if (game_input->get_is_key_pressed(GLFW_KEY_UP)) {
         chess::Direction direction;
-        if (chess_game->board.sideToMove() == chess::Color::WHITE) {
+        if (chess_game->board.sideToMove() == chess::Color::WHITE)
             direction = chess::Direction::NORTH;
-        } else {
+        else
             direction = chess::Direction::SOUTH;
-        }
-        chess::Square new_square = chess_game->move_selecting_square(direction);
-        if (new_square != chess::Square::NO_SQ) {
-            board->set_uniform("selecting_square", glm::vec2(new_square.file(), new_square.rank()));
-        }
+
+        chess_game->selecting_square = chess_game->move_selecting_square(direction);
+        update_shader_selecting_square();
     }
     if (game_input->get_is_key_pressed(GLFW_KEY_RIGHT)) {
         chess::Direction direction;
-        if (chess_game->board.sideToMove() == chess::Color::WHITE) {
+        if (chess_game->board.sideToMove() == chess::Color::WHITE)
             direction = chess::Direction::EAST;
-        } else {
+        else
             direction = chess::Direction::WEST;
-        }
-        chess::Square new_square = chess_game->move_selecting_square(direction);
-        if (new_square != chess::Square::NO_SQ) {
-            board->set_uniform("selecting_square", glm::vec2(new_square.file(), new_square.rank()));
-        }
+
+        chess_game->selecting_square = chess_game->move_selecting_square(direction);
+        update_shader_selecting_square();
     }
     if (game_input->get_is_key_pressed(GLFW_KEY_LEFT)) {
         chess::Direction direction;
-        if (chess_game->board.sideToMove() == chess::Color::WHITE) {
+        if (chess_game->board.sideToMove() == chess::Color::WHITE)
             direction = chess::Direction::WEST;
-        } else {
+        else
             direction = chess::Direction::EAST;
-        }
-        chess::Square new_square = chess_game->move_selecting_square(direction);
-        if (new_square != chess::Square::NO_SQ) {
-            board->set_uniform("selecting_square", glm::vec2(new_square.file(), new_square.rank()));
-        }
+
+        chess_game->selecting_square = chess_game->move_selecting_square(direction);
+        update_shader_selecting_square();
     }
 
     // Muda o tipo de projeção
