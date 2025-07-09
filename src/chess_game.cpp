@@ -50,6 +50,11 @@ void ChessGame::set_next_move(chess::Move move)
 
 chess::Square ChessGame::move_selecting_square(chess::Direction direction)
 {
+    if (selecting_square == chess::Square::NO_SQ) {
+        set_selecting_square(chess::Square::SQ_E4);
+        return chess::Square::SQ_E4;;
+    }
+
     chess::Rank new_rank = selecting_square.rank() + (int)direction / 8;
     chess::File new_file = selecting_square.file() + (int)direction % 8;
 
@@ -59,6 +64,6 @@ chess::Square ChessGame::move_selecting_square(chess::Direction direction)
         return new_square;
     }
     else {
-        return chess::Square::NO_SQ;
+        return selecting_square;
     }
 }

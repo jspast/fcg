@@ -41,11 +41,6 @@ void GameplayState::load()
             GLFW_KEY_F,
             GLFW_KEY_P,
             GLFW_KEY_O,
-            GLFW_KEY_UP,
-            GLFW_KEY_LEFT,
-            GLFW_KEY_DOWN,
-            GLFW_KEY_RIGHT,
-            GLFW_KEY_ENTER
         },
         std::vector<int> {},
         std::set<int> {},
@@ -65,7 +60,12 @@ void GameplayState::load()
         window->glfw_window,
         std::vector<int> {
             GLFW_KEY_F3,
-            GLFW_KEY_ESCAPE
+            GLFW_KEY_ESCAPE,
+            GLFW_KEY_UP,
+            GLFW_KEY_LEFT,
+            GLFW_KEY_DOWN,
+            GLFW_KEY_RIGHT,
+            GLFW_KEY_ENTER,
         },
         std::vector<int> {
             GLFW_MOUSE_BUTTON_LEFT
@@ -237,7 +237,7 @@ void GameplayState::process_inputs(float delta_t)
     glm::vec4 col;
 
     // Identifica a casa apontada, enquanto não há uma animação em progresso
-    if (!observer_input->get_is_enabled() && 
+    if (!observer_input->get_is_enabled() &&
         chess_game->current_state != ChessGame::IngameState::ONGOING_MOVE) {
 
         glm::vec4 ray = cursor_to_ray(input->get_cursor_position(),
@@ -259,12 +259,56 @@ void GameplayState::process_inputs(float delta_t)
 
             chess::Square new_square(file, rank);
 
-            chess_game->selecting_square = new_square;
+            chess_game->set_selecting_square(new_square);
             update_shader_selecting_square();
 
             // Identifica se a casa apontada foi selecionada com o mouse
             if (input->get_is_mouse_button_released(GLFW_MOUSE_BUTTON_LEFT)) {
-                chess_game->selected_square = new_square;
+                chess_game->set_selecting_square(new_square);
+                update_shader_selected_square();
+            }
+        }
+        else {
+            if (input->get_is_key_pressed(GLFW_KEY_DOWN)  ||
+                input->get_is_key_pressed(GLFW_KEY_UP)    ||
+                input->get_is_key_pressed(GLFW_KEY_RIGHT) ||
+                input->get_is_key_pressed(GLFW_KEY_LEFT))
+            {
+                chess::Direction direction;
+
+                if (input->get_is_key_pressed(GLFW_KEY_DOWN)) {
+                    // Muda a seleção da casa atual de acordo com a perspectiva
+                    if (chess_game->board.sideToMove() == chess::Color::WHITE)
+                        direction = chess::Direction::SOUTH;
+                    else
+                        direction = chess::Direction::NORTH;
+                }
+                if (input->get_is_key_pressed(GLFW_KEY_UP)) {
+                    if (chess_game->board.sideToMove() == chess::Color::WHITE)
+                        direction = chess::Direction::NORTH;
+                    else
+                        direction = chess::Direction::SOUTH;
+                }
+                if (input->get_is_key_pressed(GLFW_KEY_RIGHT)) {
+                    if (chess_game->board.sideToMove() == chess::Color::WHITE)
+                        direction = chess::Direction::EAST;
+                    else
+                        direction = chess::Direction::WEST;
+                }
+                if (input->get_is_key_pressed(GLFW_KEY_LEFT)) {
+                    if (chess_game->board.sideToMove() == chess::Color::WHITE)
+                        direction = chess::Direction::WEST;
+                    else
+                        direction = chess::Direction::EAST;
+                }
+
+                chess_game->set_selecting_square(chess_game->move_selecting_square(direction));
+                update_shader_selecting_square();
+            }
+
+
+            if (input->get_is_key_pressed(GLFW_KEY_ENTER)) {
+                chess_game->set_selected_square(chess_game->selecting_square);
                 update_shader_selected_square();
             }
         }
@@ -301,48 +345,6 @@ void GameplayState::process_inputs(float delta_t)
         free_camera = build_free_camera(camera);
         camera = free_camera;
         window->set_user_pointer(camera.get());
-    }
-
-    // Muda a seleção da casa atual de acordo com a perspectiva
-    if (observer_input->get_is_key_pressed(GLFW_KEY_DOWN)) {
-        chess::Direction direction;
-        if (chess_game->board.sideToMove() == chess::Color::WHITE)
-            direction = chess::Direction::SOUTH;
-        else
-            direction = chess::Direction::NORTH;
-
-        chess_game->selecting_square = chess_game->move_selecting_square(direction);
-        update_shader_selecting_square();
-    }
-    if (observer_input->get_is_key_pressed(GLFW_KEY_UP)) {
-        chess::Direction direction;
-        if (chess_game->board.sideToMove() == chess::Color::WHITE)
-            direction = chess::Direction::NORTH;
-        else
-            direction = chess::Direction::SOUTH;
-
-        chess_game->selecting_square = chess_game->move_selecting_square(direction);
-        update_shader_selecting_square();
-    }
-    if (observer_input->get_is_key_pressed(GLFW_KEY_RIGHT)) {
-        chess::Direction direction;
-        if (chess_game->board.sideToMove() == chess::Color::WHITE)
-            direction = chess::Direction::EAST;
-        else
-            direction = chess::Direction::WEST;
-
-        chess_game->selecting_square = chess_game->move_selecting_square(direction);
-        update_shader_selecting_square();
-    }
-    if (observer_input->get_is_key_pressed(GLFW_KEY_LEFT)) {
-        chess::Direction direction;
-        if (chess_game->board.sideToMove() == chess::Color::WHITE)
-            direction = chess::Direction::WEST;
-        else
-            direction = chess::Direction::EAST;
-
-        chess_game->selecting_square = chess_game->move_selecting_square(direction);
-        update_shader_selecting_square();
     }
 
     // Muda o tipo de projeção
@@ -484,7 +486,7 @@ void GameplayState::update_3D_piece(chess::Move move, chess::Piece piece, float 
     auto result = piece_to_object_instance(move.from(), piece);
     std::shared_ptr<Object> piece_object = result.first;
     int instance_id = result.second;
-    
+
     if (piece == chess::Piece::WHITEKNIGHT) {
         piece_object->set_transform(instance_id, Matrix_Translate(new_x, new_y, new_z) * Matrix_Rotate_Y(M_PI));
     } else {
