@@ -105,7 +105,7 @@ class GameplayState: public GameState {
         std::shared_ptr<LookAtCamera> lookat_camera;
         std::shared_ptr<Camera>       camera;
 
-        std::unique_ptr<InputManager> game_input;
+        std::unique_ptr<InputManager> observer_input;
         std::unique_ptr<InputManager> input;
 
         std::unique_ptr<Hud> hud;

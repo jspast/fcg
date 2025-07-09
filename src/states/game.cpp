@@ -30,7 +30,7 @@ void GameplayState::load()
 
     chess_game = std::make_unique<ChessGame>();
 
-    game_input = std::make_unique<InputManager>(
+    observer_input = std::make_unique<InputManager>(
         window->glfw_window,
         std::vector<int> {
             GLFW_KEY_W,
@@ -59,7 +59,7 @@ void GameplayState::load()
         }
     );
 
-    game_input->set_is_enabled(false);
+    observer_input->set_is_enabled(false);
 
     input = std::make_unique<InputManager>(
         window->glfw_window,
@@ -237,7 +237,7 @@ void GameplayState::process_inputs(float delta_t)
     glm::vec4 col;
 
     // Identifica a casa apontada, enquanto não há uma animação em progresso
-    if (!game_input->get_is_enabled() && 
+    if (!observer_input->get_is_enabled() && 
         chess_game->current_state != ChessGame::IngameState::ONGOING_MOVE) {
 
         glm::vec4 ray = cursor_to_ray(input->get_cursor_position(),
@@ -275,10 +275,10 @@ void GameplayState::process_inputs(float delta_t)
     if (input->get_is_key_pressed(GLFW_KEY_ESCAPE) ||
         input->get_is_gamepad_button_pressed(GLFW_JOYSTICK_1, GLFW_GAMEPAD_BUTTON_START))
     {
-        game_input->set_is_enabled(!game_input->get_is_enabled());
+        observer_input->set_is_enabled(!observer_input->get_is_enabled());
         window->toggle_cursor();
 
-        if(game_input->get_is_enabled()) {
+        if(observer_input->get_is_enabled()) {
             chess_game->selecting_square = chess::Square::NO_SQ;
             chess_game->selected_square = chess::Square::NO_SQ;
         }
@@ -292,19 +292,19 @@ void GameplayState::process_inputs(float delta_t)
         hud->toggle_debug_info();
 
     // Troca o tipo de câmera
-    if (game_input->get_is_key_pressed(GLFW_KEY_L)) {
+    if (observer_input->get_is_key_pressed(GLFW_KEY_L)) {
         lookat_camera = build_lookat_camera(camera, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 2.0f);
         camera = lookat_camera;
         window->set_user_pointer(camera.get());
     }
-    if (game_input->get_is_key_pressed(GLFW_KEY_F)) {
+    if (observer_input->get_is_key_pressed(GLFW_KEY_F)) {
         free_camera = build_free_camera(camera);
         camera = free_camera;
         window->set_user_pointer(camera.get());
     }
 
     // Muda a seleção da casa atual de acordo com a perspectiva
-    if (game_input->get_is_key_pressed(GLFW_KEY_DOWN)) {
+    if (observer_input->get_is_key_pressed(GLFW_KEY_DOWN)) {
         chess::Direction direction;
         if (chess_game->board.sideToMove() == chess::Color::WHITE)
             direction = chess::Direction::SOUTH;
@@ -314,7 +314,7 @@ void GameplayState::process_inputs(float delta_t)
         chess_game->selecting_square = chess_game->move_selecting_square(direction);
         update_shader_selecting_square();
     }
-    if (game_input->get_is_key_pressed(GLFW_KEY_UP)) {
+    if (observer_input->get_is_key_pressed(GLFW_KEY_UP)) {
         chess::Direction direction;
         if (chess_game->board.sideToMove() == chess::Color::WHITE)
             direction = chess::Direction::NORTH;
@@ -324,7 +324,7 @@ void GameplayState::process_inputs(float delta_t)
         chess_game->selecting_square = chess_game->move_selecting_square(direction);
         update_shader_selecting_square();
     }
-    if (game_input->get_is_key_pressed(GLFW_KEY_RIGHT)) {
+    if (observer_input->get_is_key_pressed(GLFW_KEY_RIGHT)) {
         chess::Direction direction;
         if (chess_game->board.sideToMove() == chess::Color::WHITE)
             direction = chess::Direction::EAST;
@@ -334,7 +334,7 @@ void GameplayState::process_inputs(float delta_t)
         chess_game->selecting_square = chess_game->move_selecting_square(direction);
         update_shader_selecting_square();
     }
-    if (game_input->get_is_key_pressed(GLFW_KEY_LEFT)) {
+    if (observer_input->get_is_key_pressed(GLFW_KEY_LEFT)) {
         chess::Direction direction;
         if (chess_game->board.sideToMove() == chess::Color::WHITE)
             direction = chess::Direction::WEST;
@@ -346,30 +346,30 @@ void GameplayState::process_inputs(float delta_t)
     }
 
     // Muda o tipo de projeção
-    if (game_input->get_is_key_pressed(GLFW_KEY_P))
+    if (observer_input->get_is_key_pressed(GLFW_KEY_P))
         camera->toggle_perspective_projection(true);
 
-    if (game_input->get_is_key_pressed(GLFW_KEY_O))
+    if (observer_input->get_is_key_pressed(GLFW_KEY_O))
         camera->toggle_perspective_projection(false);
 
-    if (game_input->get_is_key_down(GLFW_KEY_W) ||
-        game_input->get_is_key_down(GLFW_KEY_A) ||
-        game_input->get_is_key_down(GLFW_KEY_S) ||
-        game_input->get_is_key_down(GLFW_KEY_D))
+    if (observer_input->get_is_key_down(GLFW_KEY_W) ||
+        observer_input->get_is_key_down(GLFW_KEY_A) ||
+        observer_input->get_is_key_down(GLFW_KEY_S) ||
+        observer_input->get_is_key_down(GLFW_KEY_D))
     {
         float front_movement = 0.0f;
         float left_movement = 0.0f;
 
-        if (game_input->get_is_key_down(GLFW_KEY_W))
+        if (observer_input->get_is_key_down(GLFW_KEY_W))
             front_movement += 0.5f * delta_t;
 
-        if (game_input->get_is_key_down(GLFW_KEY_S))
+        if (observer_input->get_is_key_down(GLFW_KEY_S))
             front_movement -= 0.5f * delta_t;
 
-        if (game_input->get_is_key_down(GLFW_KEY_A))
+        if (observer_input->get_is_key_down(GLFW_KEY_A))
             left_movement += 0.5f * delta_t;
 
-        if (game_input->get_is_key_down(GLFW_KEY_D))
+        if (observer_input->get_is_key_down(GLFW_KEY_D))
             left_movement -= 0.5f * delta_t;
 
         float factor = sphere_aabbs_intersection_with_movement(
@@ -383,29 +383,29 @@ void GameplayState::process_inputs(float delta_t)
     }
 
     // Atualizamos parâmetros da câmera com os deslocamentos
-    glm::vec2 cursor_movement = game_input->get_cursor_movement();
+    glm::vec2 cursor_movement = observer_input->get_cursor_movement();
     camera->adjust_angles(-0.001f * cursor_movement.x, 0.001f * cursor_movement.y);
 
-    glm::vec2 scroll = game_input->get_scroll_offset();
+    glm::vec2 scroll = observer_input->get_scroll_offset();
     camera->adjust_orthographic_zoom(0.1 * scroll.y);
     lookat_camera->adjust_distance(-0.1 * scroll.y);
 
-    free_camera->move(-delta_t * game_input->get_gamepad_axis_value(GLFW_JOYSTICK_1,
+    free_camera->move(-delta_t * observer_input->get_gamepad_axis_value(GLFW_JOYSTICK_1,
                                                                     GLFW_GAMEPAD_AXIS_LEFT_Y),
-                        -delta_t * game_input->get_gamepad_axis_value(GLFW_JOYSTICK_1,
+                        -delta_t * observer_input->get_gamepad_axis_value(GLFW_JOYSTICK_1,
                                                                       GLFW_GAMEPAD_AXIS_LEFT_X));
 
-    camera->adjust_angles(-delta_t * game_input->get_gamepad_axis_value(GLFW_JOYSTICK_1,
+    camera->adjust_angles(-delta_t * observer_input->get_gamepad_axis_value(GLFW_JOYSTICK_1,
                                                                         GLFW_GAMEPAD_AXIS_RIGHT_X),
-                            delta_t * game_input->get_gamepad_axis_value(GLFW_JOYSTICK_1,
+                            delta_t * observer_input->get_gamepad_axis_value(GLFW_JOYSTICK_1,
                                                                          GLFW_GAMEPAD_AXIS_RIGHT_Y));
 
-    lookat_camera->adjust_distance(delta_t * (game_input->get_gamepad_axis_value(GLFW_JOYSTICK_1,
+    lookat_camera->adjust_distance(delta_t * (observer_input->get_gamepad_axis_value(GLFW_JOYSTICK_1,
                                                                                  GLFW_GAMEPAD_AXIS_LEFT_TRIGGER) -
-                                                game_input->get_gamepad_axis_value(GLFW_JOYSTICK_1,
+                                                observer_input->get_gamepad_axis_value(GLFW_JOYSTICK_1,
                                                                                    GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER)));
 
-    game_input->update();
+    observer_input->update();
     input->update();
 
     sky->set_transform(0, Matrix_Translate(camera->get_position().x - 0.5,

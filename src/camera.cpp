@@ -55,40 +55,40 @@ glm::mat4 Camera::get_projection_matrix()
 
 void Camera::adjust_angles(float ti, float pi)
 {
-    theta += ti;
-    phi = glm::clamp(phi + pi, phimin, phimax);
-    update();
+    set_angles(theta + ti, phi + pi);
 }
 
 void Camera::set_angles(float t, float p)
 {
     theta = t;
-    phi   = glm::clamp(p, phimin, phimax);
+    if (theta >= 0)
+        theta -= (2.0f * M_PI) * (int)(theta / (2.0f * M_PI));
+    else
+        theta += (2.0f * M_PI) * (1 + (int)(theta / (2.0f * M_PI)));
+
+    phi = glm::clamp(p, phimin, phimax);
+
     update();
 }
 
 void Camera::adjust_theta(float increment)
 {
-    theta += increment;
-    update();
+    set_angles(theta + increment, phi);
 }
 
 void Camera::set_theta(float t)
 {
-    theta = t;
-    update();
+    set_angles(t, phi);
 }
 
 void Camera::adjust_phi(float increment)
 {
-    phi = glm::clamp(phi + increment, phimin, phimax);
-    update();
+    set_angles(theta, phi + increment);
 }
 
 void Camera::set_phi(float p)
 {
-    phi = glm::clamp(p, phimin, phimax);
-    update();
+    set_angles(theta, p);
 }
 
 float Camera::get_theta(){
