@@ -42,11 +42,6 @@ Window::Window(const char* title, int width, int height)
     glfwMakeContextCurrent(glfw_window);
 }
 
-Window::~Window()
-{
-    glfwDestroyWindow(glfw_window);
-}
-
 void Window::set_user_pointer(void *p)
 {
     glfwSetWindowUserPointer(glfw_window, p);

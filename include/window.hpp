@@ -25,7 +25,6 @@ class Window {
 
     public:
         Window(const char* title, int width=DEFAULT_WIDTH, int height=DEFAULT_HEIGHT);
-        ~Window();
 
         GLFWwindow *glfw_window;
 
