@@ -26,10 +26,14 @@ class ChessGame {
         chess::Piece current_piece_to_move = chess::Piece::NONE;
         chess::Square origin_square = chess::Square::NO_SQ;
 
+        chess::Move ongoing_move = chess::Move::NULL_MOVE;
+
         void set_selecting_square(chess::Square square);
         void set_selected_square(chess::Square square);
         void set_piece_to_move(chess::Piece piece);
         void set_origin_square(chess::Square square);
+
+        void set_next_move(chess::Move move);
 
         chess::Square move_selecting_square(chess::Direction direction);
 };

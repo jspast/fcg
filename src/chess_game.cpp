@@ -42,6 +42,11 @@ void ChessGame::set_origin_square(chess::Square square)
     origin_square = square;
 }
 
+void ChessGame::set_next_move(chess::Move move)
+{
+    ongoing_move = move;
+}
+
 chess::Square ChessGame::move_selecting_square(chess::Direction direction)
 {
     chess::Rank new_rank = selecting_square.rank() + (int)direction / 8;

@@ -4,7 +4,7 @@
 
 #include "animation.hpp"
 
-AnimationCubicBezier::AnimationCubicBezier(glm::vec4 cp1, glm::vec4 cp2, glm::vec4 cp3, glm::vec4 cp4) {
+void AnimationCubicBezier::set_control_points(glm::vec4 cp1, glm::vec4 cp2, glm::vec4 cp3, glm::vec4 cp4) {
     control_point_1 = cp1;
     control_point_2 = cp2;
     control_point_3 = cp3;
@@ -14,6 +14,11 @@ AnimationCubicBezier::AnimationCubicBezier(glm::vec4 cp1, glm::vec4 cp2, glm::ve
 void AnimationCubicBezier::set_total_time(float seconds)
 {   
     total_time = seconds;
+}
+
+void AnimationCubicBezier::reset_time() 
+{
+    time_passed = 0.0f;
 }
 
 glm::vec4 AnimationCubicBezier::get_point_bezier(float t_raw)
@@ -38,7 +43,14 @@ glm::vec4 AnimationCubicBezier::get_point_bezier(float t_raw)
         current_degree -= 1;
     }
 
-    return control_points[0];
+    float u = 1.0f - t;
+
+    return u * u * u * control_point_1 +
+           3.0f * u * u * t * control_point_2 +
+           3.0f * u * t * t * control_point_3 +
+           t * t * t * control_point_4;
+
+    // return control_points[0];
 }
 
 glm::vec4 AnimationCubicBezier::get_point_for_object(float delta_t)
@@ -55,7 +67,7 @@ bool AnimationCubicBezier::is_animation_over()
     return (time_passed >= total_time);
 }
 
-AnimationCamera::AnimationCamera(float s_phi, float t_phi, float s_theta, float t_theta) {
+void AnimationCamera::set_angles(float s_phi, float t_phi, float s_theta, float t_theta) {
     target_phi = t_phi;
     target_theta = t_theta;
     starter_phi = s_phi;
@@ -65,6 +77,11 @@ AnimationCamera::AnimationCamera(float s_phi, float t_phi, float s_theta, float 
 void AnimationCamera::set_total_time(float seconds)
 {   
     total_time = seconds;
+}
+
+void AnimationCamera::reset_time() 
+{
+    time_passed = 0.0f;
 }
 
 std::pair<float, float> AnimationCamera::get_angles_for_camera(float delta_t) 

@@ -13,6 +13,7 @@
 #include "hud.hpp"
 #include "input.hpp"
 #include "state.hpp"
+#include "animation.hpp"
 
 class PieceTracker {
     private:
@@ -145,8 +146,10 @@ class GameplayState: public GameState {
 
         std::vector<std::pair<glm::vec4, AABB>> aabbs;
 
+        AnimationCubicBezier piece_animation;
+        AnimationCamera camera_animation;  
+
         void process_inputs(float delta_t);
         void update_chess_game(float delta_t);
-        void update_3D_piece(chess::Square origin_sq, chess::Square landing_sq, chess::Piece piece);
-        void update_3D_board(chess::Move move, chess::Piece piece);
+        void update_3D_piece(chess::Move move, chess::Piece piece, float new_x, float new_y, float new_z);
 };

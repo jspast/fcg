@@ -450,37 +450,26 @@ std::pair<std::shared_ptr<Object>, int> GameplayState::piece_to_object_instance(
     return {nullptr, -1};
 }
 
-void GameplayState::update_3D_piece(chess::Square origin_sq, chess::Square landing_sq, chess::Piece piece) {
-    float new_x = -BOARD_START - SQUARE_SIZE / 2.0 - SQUARE_SIZE * landing_sq.file();
-    float new_z = BOARD_START + SQUARE_SIZE / 2.0 + SQUARE_SIZE * landing_sq.rank();
+void GameplayState::update_3D_piece(chess::Move move, chess::Piece piece, float new_x, float new_y, float new_z) {
+    if (chess_game->board.isCapture(move)) {
+        chess::Piece captured_piece = chess_game->board.at(move.to());
+        auto result = piece_to_object_instance(move.to(), captured_piece);
+        std::shared_ptr<Object> piece_object = result.first;
+        int instance_id = result.second;
 
-    std::cout << "Updated piece: " << piece << std::endl;
+        piece_object->deactivate_instance(instance_id);
+    }
 
-    auto result = piece_to_object_instance(origin_sq, piece);
+    // std::cout << "Updated piece: " << piece << std::endl;
+
+    auto result = piece_to_object_instance(move.from(), piece);
     std::shared_ptr<Object> piece_object = result.first;
     int instance_id = result.second;
     
-    piece_object->set_transform(instance_id, Matrix_Translate(new_x, 0.0f, new_z));
-    piece_tracker.movePiece(origin_sq, landing_sq);
-}
-
-void GameplayState::update_3D_board(chess::Move move, chess::Piece piece) {
-    switch(move.typeOf()) {
-        case chess::Move::ENPASSANT:
-            break;
-        case chess::Move::CASTLING:
-            break;
-        default:
-            if (chess_game->board.isCapture(move)) {
-                chess::Piece captured_piece = chess_game->board.at(move.to());
-                auto result = piece_to_object_instance(move.to(), captured_piece);
-                std::shared_ptr<Object> piece_object = result.first;
-                int instance_id = result.second;
-
-                piece_object->deactivate_instance(instance_id);
-            }
-            update_3D_piece(move.from(), move.to(), piece);
-            break;
+    if (piece.type() == chess::PieceType::KNIGHT) {
+        piece_object->set_transform(instance_id, Matrix_Translate(new_x, new_y, new_z) * Matrix_Rotate_Y(M_PI));
+    } else {
+        piece_object->set_transform(instance_id, Matrix_Translate(new_x, new_y, new_z));
     }
 }
 
@@ -501,25 +490,60 @@ void GameplayState::update_chess_game(float delta_t) {
                 chess::Move move = chess::Move::make(chess_game->origin_square, chess_game->selected_square);
                 if (chess_game->is_move_valid(move)) {
                     chess_game->current_state = ChessGame::IngameState::ONGOING_MOVE;
-                    // essa linha de baixo que vai ser subsituída pela animação no caso abaixo (ONGOING_MOVE)
-                    update_3D_board(move, chess_game->current_piece_to_move);
-                    chess_game->make_move(move);
-                    std::cout << chess_game->board << std::endl;
+                    chess_game->set_next_move(move);
+
+                    // Configurar a animação da peça
+                    piece_animation.reset_time();
+                    float old_x = -BOARD_START - SQUARE_SIZE / 2.0 - SQUARE_SIZE * move.from().file();
+                    float old_z = BOARD_START + SQUARE_SIZE / 2.0 + SQUARE_SIZE * move.from().rank();
+                    float new_x = -BOARD_START - SQUARE_SIZE / 2.0 - SQUARE_SIZE * move.to().file();
+                    float new_z = BOARD_START + SQUARE_SIZE / 2.0 + SQUARE_SIZE * move.to().rank();
+                    glm::vec4 cp1 = glm::vec4(old_x, 0.0f, old_z, 1.0f), cp2 = glm::vec4(old_x, 0.1f, old_z, 1.0f),
+                              cp3 = glm::vec4(new_x, 0.1f, new_z, 1.0f), cp4 = glm::vec4(new_x, 0.0f, new_z, 1.0f);
+                    piece_animation.set_control_points(cp1, cp2, cp3, cp4);
+
+                    // Configurara a animação do movimento de câmera
+                    camera_animation.reset_time();
+                    if (chess_game->board.sideToMove() == chess::Color::WHITE) {
+                        camera_animation.set_angles(0, 0, 0, 0); // TODO
+                    } else {
+                        camera_animation.set_angles(0, 0, 0, 0); // TODO
+                    }
+                    
                 }
             } else if (selected_piece.color() == chess_game->board.sideToMove()) {
                 chess_game->set_origin_square(chess_game->selected_square);
                 chess_game->set_piece_to_move(selected_piece);
             }
         }
-    } else {
-        // Aqui vem a lógica da animação
-        // Peça movendo (com curva Bézier) + peça tombando + rotação do tabuleiro
-        
-        chess::movegen::legalmoves(chess_game->moves, chess_game->board);
-        chess_game->set_origin_square(chess::Square::NO_SQ); 
-        chess_game->set_selected_square(chess::Square::NO_SQ); 
-        chess_game->set_piece_to_move(chess::Piece::NONE); 
-        chess_game->current_state = ChessGame::IngameState::SELECTING_SQUARES;
+    } else if (chess_game->current_state == ChessGame::IngameState::ONGOING_MOVE) {
+        chess::Move move = chess_game->ongoing_move;
+        if (move.typeOf() != chess::Move::ENPASSANT &&
+            move.typeOf() != chess::Move::CASTLING) {
+
+            // Executar animação da peça com curva de Bézier
+            if (!piece_animation.is_animation_over()) {
+                glm::vec4 new_position = piece_animation.get_point_for_object(delta_t);
+                update_3D_piece(move, chess_game->current_piece_to_move, new_position[0], new_position[1], new_position[2]);
+                printf("Bezier calculado para delta %f\n", delta_t);
+            } else {
+                piece_tracker.movePiece(move.from(), move.to());
+
+                // Executar animação do ângulo da câmera
+                
+
+                // Efetuar a jogada no tabuleiro virtual
+                chess_game->make_move(chess_game->ongoing_move);
+                std::cout << chess_game->board << std::endl;
+
+                // Resetar configurações para a próxima jogada
+                chess::movegen::legalmoves(chess_game->moves, chess_game->board);
+                chess_game->set_origin_square(chess::Square::NO_SQ); 
+                chess_game->set_selected_square(chess::Square::NO_SQ); 
+                chess_game->set_piece_to_move(chess::Piece::NONE); 
+                chess_game->current_state = ChessGame::IngameState::SELECTING_SQUARES;
+            }
+        }   
     }
 }
 
