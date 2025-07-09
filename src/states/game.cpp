@@ -28,6 +28,7 @@ void GameplayState::load()
     camera->set_aspect_ratio((float)window_size.x / window_size.y);
 
     chess_game = std::make_unique<ChessGame>();
+    chess_game->selected_square = chess::Square::SQ_A1;
 
     game_input = std::make_unique<InputManager>(
         window->glfw_window,
@@ -257,6 +258,15 @@ void GameplayState::process_inputs(float delta_t)
     {
         game_input->set_is_enabled(!game_input->get_is_enabled());
         window->toggle_cursor();
+
+        if(game_input->get_is_enabled()) {
+            board->set_uniform("selected_square", glm::vec2(-10, -10));
+            board->set_uniform("selecting_square", glm::vec2(-10, -10));
+        }
+        else {
+            board->set_uniform("selected_square", glm::vec2(chess_game->selected_square.file(), chess_game->selected_square.rank()));
+            board->set_uniform("selecting_square", glm::vec2(chess_game->selecting_square.file(), chess_game->selecting_square.rank()));
+        }
     }
 
     // Exibe ou oculta informações de depuração
