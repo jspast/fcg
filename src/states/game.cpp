@@ -12,6 +12,7 @@
 #include "gpu.hpp"
 #include "collisions.hpp"
 #include "animation.hpp"
+#include "textrendering.hpp"
 
 void GameplayState::load()
 {
@@ -586,4 +587,7 @@ void GameplayState::draw()
     table->draw();
 
     hud->draw();
+
+    if(chess_game->moves.empty())
+        TextRendering_PrintString(window->glfw_window, "FIM DE JOGO", HUD_START, HUD_TOP - TextRendering_LineHeight(window->glfw_window) * 4.0f, 4.0f);
 }
