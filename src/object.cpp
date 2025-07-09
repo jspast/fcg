@@ -472,14 +472,16 @@ void Object::draw(const glm::mat4 parent_transform)
 {
     glm::mat4 t = parent_transform;
     for (size_t i=0; i<num_instances; i++) {
-        t = parent_transform * transforms[i];
+        if (!inactive_instances[i]) {
+            t = parent_transform * transforms[i];
 
-        apply_uniforms();
+            apply_uniforms();
 
-        // Always set model matrix
-        gpu_program.set_uniform("model", t);
+            // Always set model matrix
+            gpu_program.set_uniform("model", t);
 
-        model->draw(gpu_program);
+            model->draw(gpu_program);
+        }
     }
     
     for (auto& child : children) {
@@ -496,6 +498,12 @@ void Object::add_instance(glm::mat4 t)
 {
     transforms.push_back(t);
     num_instances += 1;
+    inactive_instances.push_back(false);
+}
+
+void Object::deactivate_instance(int instance_id) {
+    inactive_instances[instance_id] = true;
+    printf("Instance deativated: %d\n", instance_id);
 }
 
 void Object::set_transform(int instance_id, glm::mat4 t)

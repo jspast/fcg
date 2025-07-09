@@ -141,10 +141,12 @@ class GameplayState: public GameState {
         std::shared_ptr<Object> black_bishop;
 
         PieceTracker piece_tracker;
+        std::pair<std::shared_ptr<Object>, int> piece_to_object_instance(chess::Square sq, chess::Piece piece);
 
         std::vector<std::pair<glm::vec4, AABB>> aabbs;
 
         void process_inputs(float delta_t);
         void update_chess_game(float delta_t);
-        void update_3D_board(chess::Square origin_sq, chess::Square landing_sq, chess::Piece piece);
+        void update_3D_piece(chess::Square origin_sq, chess::Square landing_sq, chess::Piece piece);
+        void update_3D_board(chess::Move move, chess::Piece piece);
 };

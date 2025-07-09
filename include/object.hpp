@@ -49,6 +49,7 @@ class Object {
         void add_child(std::shared_ptr<Object> child);
 
         void add_instance(glm::mat4 transform);
+        void deactivate_instance(int instance_id);
 
         void set_transform(int instance_id, glm::mat4 transform);
 
@@ -63,6 +64,7 @@ class Object {
 
         std::vector<glm::mat4> transforms;
         size_t num_instances = 0;
+        std::vector<bool> inactive_instances;
 
         std::vector<std::shared_ptr<Object>> children;
 };

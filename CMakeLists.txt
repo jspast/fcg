@@ -14,6 +14,7 @@ set(SOURCES
   src/chess_game.cpp
   src/gpu.cpp
   src/collisions.cpp
+  src/animation.cpp
   src/state.cpp
   src/states/base.cpp
   src/states/menu.cpp
