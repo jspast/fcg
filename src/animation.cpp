@@ -67,11 +67,18 @@ bool AnimationCubicBezier::is_animation_over()
     return (time_passed >= total_time);
 }
 
-void AnimationCamera::set_angles(float s_phi, float t_phi, float s_theta, float t_theta) {
-    target_phi = t_phi;
-    target_theta = t_theta;
+void AnimationCamera::set_angles(float s_phi, float t_phi, float s_theta, float t_theta) 
+{
     starter_phi = s_phi;
     starter_theta = s_theta;
+    target_phi = t_phi;
+    target_theta = t_theta;
+}
+
+void AnimationCamera::set_distance(float s_dist, float t_dist)
+{
+    starter_distance = s_dist;
+    target_distance = t_dist; 
 }
 
 void AnimationCamera::set_total_time(float seconds)
@@ -90,10 +97,15 @@ std::pair<float, float> AnimationCamera::get_angles_for_camera(float delta_t)
     if (time_passed > total_time) {
         time_passed = total_time;
     }
-    float new_phi = (target_phi - starter_phi) * time_passed / total_time;
-    float new_theta = (target_theta - starter_theta) * time_passed / total_time;
+    float new_phi = starter_phi + (target_phi - starter_phi) * time_passed / total_time;
+    float new_theta = starter_theta + (target_theta - starter_theta) * time_passed / total_time;
+    current_distance = starter_distance + (target_distance - starter_distance) * time_passed / total_time;
 
-    return {new_phi, new_theta};
+    return {new_theta, new_phi};
+}
+
+float AnimationCamera::get_distance_for_camera() {
+    return current_distance;
 }
 
 bool AnimationCamera::is_animation_over() 

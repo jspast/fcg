@@ -50,6 +50,7 @@ class Object {
 
         void add_instance(glm::mat4 transform);
         void deactivate_instance(int instance_id);
+        bool is_active(int instance_id);
 
         void set_transform(int instance_id, glm::mat4 transform);
 

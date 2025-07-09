@@ -501,9 +501,14 @@ void Object::add_instance(glm::mat4 t)
     inactive_instances.push_back(false);
 }
 
-void Object::deactivate_instance(int instance_id) {
+void Object::deactivate_instance(int instance_id) 
+{
     inactive_instances[instance_id] = true;
-    printf("Instance deativated: %d\n", instance_id);
+}
+
+bool Object::is_active(int instance_id) 
+{
+    return !inactive_instances[instance_id];
 }
 
 void Object::set_transform(int instance_id, glm::mat4 t)
