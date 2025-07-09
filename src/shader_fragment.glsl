@@ -18,8 +18,6 @@ in vec3 texcoords_skybox;
 
 in vec3 color_vert;
 
-flat in int instanceID;
-
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
 uniform mat4 view;
@@ -254,8 +252,6 @@ void main()
                     surface_color = texture(WhitePiecesImage, texcoords).rgb;
                     ambient_refl_color = surface_color * texture(WhitePiecesAmbient, texcoords).r;
                     specular_refl_color = vec3(0.0);
-
-                    color.a = 1.0;
                     break;
 
                 case BLACK:
