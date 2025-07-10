@@ -56,7 +56,7 @@ class Object {
 
         void set_uniform(std::string_view name, UniformValue value);
         void apply_uniforms();
-
+        
         void draw(glm::mat4 parent_transform = Matrix_Identity());
 
     private:

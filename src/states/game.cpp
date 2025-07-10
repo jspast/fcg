@@ -474,15 +474,6 @@ std::pair<std::shared_ptr<Object>, int> GameplayState::piece_to_object_instance(
 }
 
 void GameplayState::update_3D_piece(chess::Move move, chess::Piece piece, float new_x, float new_y, float new_z) {
-    if (chess_game->board.isCapture(move)) {
-        chess::Piece captured_piece = chess_game->board.at(move.to());
-        auto captured_result = piece_to_object_instance(move.to(), captured_piece);
-        std::shared_ptr<Object> captured_piece_object = captured_result.first;
-        int captured_instance_id = captured_result.second;
-
-        captured_piece_object->deactivate_instance(captured_instance_id);
-    }
-
     auto result = piece_to_object_instance(move.from(), piece);
     std::shared_ptr<Object> piece_object = result.first;
     int instance_id = result.second;
@@ -546,6 +537,23 @@ void GameplayState::update_chess_game(float delta_t) {
             if (!piece_animation.is_animation_over()) {
                 glm::vec4 new_position = piece_animation.get_point_for_object(delta_t);
                 update_3D_piece(move, chess_game->current_piece_to_move, new_position[0], new_position[1], new_position[2]);
+
+                if (chess_game->board.isCapture(move)) {
+                    auto current_result = piece_to_object_instance(move.from(), chess_game->current_piece_to_move);
+                    std::shared_ptr<Object> current_piece_object = current_result.first;
+                    std::shared_ptr<ObjModel> current_piece_model = current_piece_object->model;
+
+                    chess::Piece captured_piece = chess_game->board.at(move.to());
+                    auto captured_result = piece_to_object_instance(move.to(), captured_piece);
+                    std::shared_ptr<Object> captured_piece_object = captured_result.first;
+                    std::shared_ptr<ObjModel> captured_piece_model = captured_piece_object->model;
+                    int captured_instance_id = captured_result.second;
+                    glm::vec4 target_position = piece_animation.get_point_bezier(0.6);
+
+                    if (aabb_aabb_intersection(new_position, current_piece_model->aabb*1.5, target_position, captured_piece_model->aabb*1.5)) {
+                        captured_piece_object->deactivate_instance(captured_instance_id);
+                    }
+                }
             } else {
                 // Executar animação do ângulo da câmera
                 if (!camera_animation.is_animation_over()) {
@@ -556,7 +564,6 @@ void GameplayState::update_chess_game(float delta_t) {
                     // Efetuar a jogada no tabuleiro virtual
                     piece_tracker.movePiece(move.from(), move.to());
                     chess_game->make_move(chess_game->ongoing_move);
-                    std::cout << chess_game->board << std::endl;
 
                     // Resetar configurações para a próxima jogada
                     chess::movegen::legalmoves(chess_game->moves, chess_game->board);

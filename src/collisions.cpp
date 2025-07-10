@@ -105,16 +105,16 @@ bool aabb_aabb_intersection(glm::vec4 pos1,
                             glm::vec4 pos2,
                             AABB aabb2)
 {
-    glm::vec<3, bool> collision;
+    glm::vec3 a_min = glm::vec3(pos1) + aabb1.min;
+    glm::vec3 a_max = glm::vec3(pos1) + aabb1.max;
 
-    collision.x = pos1.x - aabb1.min.x / 2.0f <= pos2.x + aabb2.max.x / 2.0f &&
-                  pos1.x + aabb1.max.x / 2.0f >= pos2.x - aabb2.min.x / 2.0f;
+    glm::vec3 b_min = glm::vec3(pos2) + aabb2.min;
+    glm::vec3 b_max = glm::vec3(pos2) + aabb2.max;
 
-    collision.y = pos1.y - aabb1.min.y / 2.0f <= pos2.y + aabb2.max.y / 2.0f &&
-                  pos1.y + aabb1.max.y / 2.0f >= pos2.y - aabb2.min.y / 2.0f;
+    bool collision_x = a_min.x <= b_max.x && a_max.x >= b_min.x;
+    bool collision_y = a_min.y <= b_max.y && a_max.y >= b_min.y;
+    bool collision_z = a_min.z <= b_max.z && a_max.z >= b_min.z;
 
-    collision.z = pos1.z - aabb1.min.z / 2.0f <= pos2.z + aabb2.max.z / 2.0f &&
-                  pos1.z + aabb1.max.z / 2.0f >= pos2.z - aabb2.min.z / 2.0f;
-
-    return collision.x && collision.y && collision.z;
+    return collision_x && collision_y && collision_z;
+    // return collision.x && collision.y && collision.z;
 }
