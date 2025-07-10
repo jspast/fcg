@@ -264,7 +264,7 @@ void GameplayState::process_inputs(float delta_t)
 
             // Identifica se a casa apontada foi selecionada com o mouse
             if (input->get_is_mouse_button_released(GLFW_MOUSE_BUTTON_LEFT)) {
-                chess_game->set_selecting_square(new_square);
+                chess_game->set_selected_square(new_square);
                 update_shader_selected_square();
             }
         }
