@@ -6,6 +6,10 @@ Dupla: João Pastorello e Isadora Schwaab
 
 ## Contribuições
 
+O contribuinte João Pastorello foi responsável pela montagem inicial da estrutura do projeto, baseada na refatoração do código disponibilizado pelo professor nas atividades de laboratório. Encontrou os modelos de objetos e texturas utilizados no jogo; implementou o sistema de estados que rege o fluxo de controle da aplicação, organizou a implementação das câmeras (livre e look-at) e aplicou os mapeamentos de textura, modelos de iluminação e de interpolação de todos os objetos. Também foi responsável pela aplicação dos testes de colisão e das features extras (Reflection Mapping, seleção de casas do tabuleiro com mouse e mapeamento de normais).
+
+A contribuinte Isadora Schwaab foi responsável pela organização final da instanciação dos objetos (em nível de instâncias que diferem apenas em sua posição). Também foi responsável pela implementação da lógica de jogo (mapeamento entre o jogo 3D e um tabuleiro virtual, que é modificado conforme os inputs), bem como pela animação das peças na captura a partir de curvas de Bézier cúbicas (incluindo a aplicação de um dos testes de colisão na captura) e pela moviementação automática da câmera look-at após uma jogada (que também é implementada como uma animação baseada em tempo decorrido).
+
 ## Uso de IAs generativas
 
 O **ChatGPT** foi utilizado principalmente para esclarescer conceitos de C++, como o uso de ponteiros inteligentes, estruturas de dados e processamento assíncrono.
@@ -13,13 +17,15 @@ Além disso, gerou um esboço do sistema de estados (classes `GameState` e `Game
 No geral, a ferramenta foi útil, mas se mostrou incapaz de auxiliar com decisões complexas.
 Conseguiu substituir muitas buscas rápidas na documentação e internet, mas não tarefas de raciocínio lógico avançado.
 
+O **Deepseek** também foi utilizado como auxiliar para a implementação da lógica de jogo, esclarescendo a documentação da biblioteca Chess Library (Disservin) e fornecendo exemplos práticos para a aplicação de funções.
+
 ## Conceitos de Computação Gráfica aplicados no desenvolvimento
 
 - [x] Malhas poligonais complexas
 - [x] Transformações geométricas controladas pelo usuário
 - [x] Câmera livre e câmera look-at
 - [x] Instâncias de objetos
-- [ ] Três tipos de testes de intersecção
+- [x] Três tipos de testes de intersecção
 - [x] Modelos de Iluminação Difusa e Blinn-Phong
 - [x] Modelos de Interpolação de Phong e Gouraud
 - [x] Mapeamento de texturas em todos os objetos
@@ -42,8 +48,33 @@ Extras:
 ![](screenshots/blinn_phong_illumination.jpg)
 *Modelo de Iluminação de Blinn-Phong com Interpolação de Phong*
 
+![](screenshots/cursor_selection_0.png)
+
+![](screenshots/cursor_selection_1.png)
+*Seleção de casas do tabuleiro com o mouse*
+
 
 ## Manual de usuário
+
+Executando a aplicação, o usuário deve ter acesso a um menu simples. Ele pode:
+- alterar a qualidade das texturas carregadas, para que estejam correspondentes aos recursos do ambiente de execução;
+- iniciar um novo jogo, clicando no botão 'JOGAR'.
+
+Na tela de jogo, o controle se dá tanto através do mouse quanto do teclado. O usuário pode:
+- mover o cursor sobre o tabuleiro para indicar uma casa (que fica colorida em verde);
+- clicar em uma casa do tabuleiro (com o botão esquerdo do mouse) para seleciona-la (tornando a casa azul);
+- com o cursor posicionado fora do tabuleiro, ele pode ainda controlar a seleção da casa com as teclas UP, DOWN, LEFT e RIGHT do teclado; como uma casa pré-selecionada (verde), o usuário pode usar a tecla ENTER para selecioná-la (tornando-a azul);
+- usar a tecla ESCAPE para entrar no modo *observador*.
+
+Estando no modo observador (o qual captura o cursor, não permitindo que o usuário faça um movimento de peça), o usuário pode:
+- usar o *scroll* do mouse para controlar a aproximação da câmera look-at com o ponto de foco;
+- usar a tecla O para ativar o modo de projeção ortográfica, e pressioná-la novamente para retornar à projeção perspectiva;
+- usar a tecla F para ativar a câmera livre, e a tecla L para retornar à câmera look-at (com foco no centro do tabuleiro);
+- estando com a câmera livre ativa, o usuário pode se movimentar com as teclas W, A, S e D, deterninando sua direção com o cursor do mouse;
+- usar a tecla F3 para exibir informações de depuração na tela.
+
+O jogo segue a lógica de xadrez comum, alternando entre turnos. Contudo, não permite jogadas especiais (promoção de peça, roque, *en-passant*...). A aplicação detecta automaticamente o fim de jogo e exibe na tela o resultado correspondente. Encerrado o jogo, é necessário reiniciar a aplicação para jogar novamente.
+
 
 ## Compilação
 
