@@ -62,6 +62,7 @@ Executando a aplicação, o usuário deve ter acesso a um menu simples. Ele pode
 
 Na tela de jogo, o controle se dá tanto através do mouse quanto do teclado. O usuário pode:
 - usar o *scroll* do mouse para controlar a aproximação da câmera look-at com o ponto de foco;
+- usar a tecla ESC para poder movimentar a câmera look-at com o mouse;
 - mover o cursor sobre o tabuleiro para indicar uma casa (que fica colorida em verde);
 - clicar em uma casa do tabuleiro (com o botão esquerdo do mouse) para seleciona-la (tornando a casa azul);
 - com o cursor posicionado fora do tabuleiro, ele pode ainda controlar a seleção da casa com as teclas UP, DOWN, LEFT e RIGHT do teclado; como uma casa pré-selecionada (verde), o usuário pode usar a tecla ENTER para selecioná-la (tornando-a azul);

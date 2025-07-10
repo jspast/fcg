@@ -316,6 +316,23 @@ void GameplayState::process_inputs(float delta_t)
     if (input->get_is_key_pressed(GLFW_KEY_F3))
         hud->toggle_debug_info();
 
+    // Alterna entre estado de manipulação da câmera e estado de 
+    // seleção de casa através da tecla ESC
+    if (input->get_is_key_pressed(GLFW_KEY_ESCAPE) ||
+        input->get_is_gamepad_button_pressed(GLFW_JOYSTICK_1, GLFW_GAMEPAD_BUTTON_START))
+    {
+        observer_input->set_is_enabled(!observer_input->get_is_enabled());
+        window->toggle_cursor();
+
+        if(observer_input->get_is_enabled()) {
+            chess_game->selecting_square = chess::Square::NO_SQ;
+            chess_game->selected_square = chess::Square::NO_SQ;
+        }
+
+        update_shader_selecting_square();
+        update_shader_selected_square();
+    }
+
     // Alterna entre modos de jogo e observador
     if (input->get_is_key_pressed(GLFW_KEY_O)) {
         observer_input->set_is_enabled(!observer_input->get_is_enabled());
