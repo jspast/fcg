@@ -48,9 +48,9 @@ Extras:
 ![](screenshots/blinn_phong_illumination.jpg)
 *Modelo de Iluminação de Blinn-Phong com Interpolação de Phong*
 
-![](screenshots/cursor_selection_0.png)
+![](screenshots/cursor_selection_0.jpg)
 
-![](screenshots/cursor_selection_1.png)
+![](screenshots/cursor_selection_1.jpg)
 *Seleção de casas do tabuleiro com o mouse*
 
 
