@@ -67,3 +67,24 @@ chess::Square ChessGame::move_selecting_square(chess::Direction direction)
         return selecting_square;
     }
 }
+
+bool ChessGame::is_game_over()
+{
+    chess::GameResult result = board.isGameOver().second;
+
+    switch (result) {
+        case chess::GameResult::WIN:
+            winner = board.sideToMove();
+            break;
+        case chess::GameResult::LOSE:
+            winner = !board.sideToMove();
+            break;
+        case chess::GameResult::DRAW:
+            winner = chess::Color::NONE;
+            break;
+        default:
+            return false;
+    }
+
+    return true;
+}

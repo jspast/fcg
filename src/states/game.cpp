@@ -1,5 +1,6 @@
 #include <memory>
 #include <set>
+#include <string_view>
 #include <vector>
 
 #include <chess.hpp>
@@ -567,10 +568,7 @@ void GameplayState::update_chess_game(float delta_t) {
 
                     // Resetar configurações para a próxima jogada
                     chess::movegen::legalmoves(chess_game->moves, chess_game->board);
-                    if (chess_game->moves.empty()) {
-                        // TODO: teste de encerramento do jogo!
-                        // usar std::pair chess_game->board.isGameOver();
-                    }
+
                     chess_game->set_origin_square(chess::Square::NO_SQ); 
                     chess_game->set_selected_square(chess::Square::NO_SQ); 
                     chess_game->set_piece_to_move(chess::Piece::NONE); 
@@ -587,7 +585,8 @@ void GameplayState::update(float delta_t)
     process_inputs(delta_t);
 
     // PASSO 2: atualização da lógica do jogo e do tabuleiro 3D
-    update_chess_game(delta_t);
+    if (!chess_game->is_game_over())
+        update_chess_game(delta_t);
 }
 
 void GameplayState::draw()
@@ -607,6 +606,20 @@ void GameplayState::draw()
 
     hud->draw();
 
-    if(chess_game->moves.empty())
-        TextRendering_PrintString(window->glfw_window, "FIM DE JOGO", HUD_START, HUD_TOP - TextRendering_LineHeight(window->glfw_window) * 4.0f, 4.0f);
+    // Mensagem de fim de jogo
+    if(chess_game->is_game_over()) {
+        std::string end_msg;
+        switch (chess_game->winner) {
+            case chess::Color(chess::Color::WHITE):
+                end_msg = "VITORIA DAS BRANCAS!";
+                break;
+            case chess::Color(chess::Color::BLACK):
+                end_msg = "VITORIA DAS PRETAS!";
+                break;
+            default:
+                end_msg = "EMPATE!";
+                break;
+        }
+        TextRendering_PrintString(window->glfw_window, end_msg, HUD_START, HUD_TOP - TextRendering_LineHeight(window->glfw_window) * 4.0f, 4.0f);
+    }
 }

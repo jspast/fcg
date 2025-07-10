@@ -36,4 +36,8 @@ class ChessGame {
         void set_next_move(chess::Move move);
 
         chess::Square move_selecting_square(chess::Direction direction);
+
+        chess::Color winner;
+
+        bool is_game_over();
 };
