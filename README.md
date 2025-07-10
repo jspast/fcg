@@ -61,17 +61,16 @@ Executando a aplicação, o usuário deve ter acesso a um menu simples. Ele pode
 - iniciar um novo jogo, clicando no botão 'JOGAR'.
 
 Na tela de jogo, o controle se dá tanto através do mouse quanto do teclado. O usuário pode:
+- usar o *scroll* do mouse para controlar a aproximação da câmera look-at com o ponto de foco;
 - mover o cursor sobre o tabuleiro para indicar uma casa (que fica colorida em verde);
 - clicar em uma casa do tabuleiro (com o botão esquerdo do mouse) para seleciona-la (tornando a casa azul);
 - com o cursor posicionado fora do tabuleiro, ele pode ainda controlar a seleção da casa com as teclas UP, DOWN, LEFT e RIGHT do teclado; como uma casa pré-selecionada (verde), o usuário pode usar a tecla ENTER para selecioná-la (tornando-a azul);
-- usar a tecla ESCAPE para entrar no modo *observador*.
+- usar a tecla O para entrar no modo *observador*;
+- usar a tecla F3 para exibir informações de depuração na tela.
 
 Estando no modo observador (o qual captura o cursor, não permitindo que o usuário faça um movimento de peça), o usuário pode:
-- usar o *scroll* do mouse para controlar a aproximação da câmera look-at com o ponto de foco;
-- usar a tecla O para ativar o modo de projeção ortográfica, e pressioná-la novamente para retornar à projeção perspectiva;
-- usar a tecla F para ativar a câmera livre, e a tecla L para retornar à câmera look-at (com foco no centro do tabuleiro);
-- estando com a câmera livre ativa, o usuário pode se movimentar com as teclas W, A, S e D, deterninando sua direção com o cursor do mouse;
-- usar a tecla F3 para exibir informações de depuração na tela.
+- se movimentar com as teclas W, A, S e D, determinando sua direção com o cursor do mouse;
+- voltar para o modo de jogo com a tecla O.
 
 O jogo segue a lógica de xadrez comum, alternando entre turnos. Contudo, não permite jogadas especiais (promoção de peça, roque, *en-passant*...). A aplicação detecta automaticamente o fim de jogo e exibe na tela o resultado correspondente. Encerrado o jogo, é necessário reiniciar a aplicação para jogar novamente.
 
