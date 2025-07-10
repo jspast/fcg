@@ -38,10 +38,6 @@ void GameplayState::load()
             GLFW_KEY_A,
             GLFW_KEY_S,
             GLFW_KEY_D,
-            GLFW_KEY_L,
-            GLFW_KEY_F,
-            GLFW_KEY_P,
-            GLFW_KEY_O,
         },
         std::vector<int> {},
         std::set<int> {},
@@ -67,6 +63,7 @@ void GameplayState::load()
             GLFW_KEY_DOWN,
             GLFW_KEY_RIGHT,
             GLFW_KEY_ENTER,
+            GLFW_KEY_O,
         },
         std::vector<int> {
             GLFW_MOUSE_BUTTON_LEFT
@@ -315,45 +312,37 @@ void GameplayState::process_inputs(float delta_t)
         }
     }
 
-    // Alterna entre estado de manipulação da câmera e estado de 
-    // seleção de casa através da tecla ESC
-    if (input->get_is_key_pressed(GLFW_KEY_ESCAPE) ||
-        input->get_is_gamepad_button_pressed(GLFW_JOYSTICK_1, GLFW_GAMEPAD_BUTTON_START))
-    {
-        observer_input->set_is_enabled(!observer_input->get_is_enabled());
-        window->toggle_cursor();
-
-        if(observer_input->get_is_enabled()) {
-            chess_game->selecting_square = chess::Square::NO_SQ;
-            chess_game->selected_square = chess::Square::NO_SQ;
-        }
-
-        update_shader_selecting_square();
-        update_shader_selected_square();
-    }
-
     // Exibe ou oculta informações de depuração
     if (input->get_is_key_pressed(GLFW_KEY_F3))
         hud->toggle_debug_info();
 
-    // Troca o tipo de câmera
-    if (observer_input->get_is_key_pressed(GLFW_KEY_L)) {
-        lookat_camera = build_lookat_camera(camera, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 2.0f);
-        camera = lookat_camera;
-        window->set_user_pointer(camera.get());
-    }
-    if (observer_input->get_is_key_pressed(GLFW_KEY_F)) {
-        free_camera = build_free_camera(camera);
-        camera = free_camera;
-        window->set_user_pointer(camera.get());
-    }
+    // Alterna entre modos de jogo e observador
+    if (input->get_is_key_pressed(GLFW_KEY_O)) {
+        observer_input->set_is_enabled(!observer_input->get_is_enabled());
+        window->toggle_cursor();
 
-    // Muda o tipo de projeção
-    if (observer_input->get_is_key_pressed(GLFW_KEY_P))
-        camera->toggle_perspective_projection(true);
+        if (observer_input->get_is_enabled()) {
+            chess_game->selecting_square = chess::Square::NO_SQ;
+            chess_game->selected_square = chess::Square::NO_SQ;
+            update_shader_selecting_square();
+            update_shader_selected_square();
 
-    if (observer_input->get_is_key_pressed(GLFW_KEY_O))
-        camera->toggle_perspective_projection(false);
+            free_camera = build_free_camera(camera);
+            camera = free_camera;
+            window->set_user_pointer(camera.get());
+        }
+        else {
+            lookat_camera = build_lookat_camera(camera, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 1.2f);
+            camera = lookat_camera;
+            if (chess_game->board.sideToMove() == chess::Color::WHITE) {
+                camera->set_angles(M_PI, M_PI / 4.0f);
+            }
+            else {
+                camera->set_angles(0.0f, M_PI / 4.0f);
+            }
+            window->set_user_pointer(camera.get());
+        }
+    }
 
     if (observer_input->get_is_key_down(GLFW_KEY_W) ||
         observer_input->get_is_key_down(GLFW_KEY_A) ||
